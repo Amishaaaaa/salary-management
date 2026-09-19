@@ -14,6 +14,7 @@ interface Props {
   meta?: Meta
   value: Filters
   onChange: (next: Filters) => void
+  hideSearch?: boolean
 }
 
 function Select({ label, value, options, onChange }: {
@@ -28,13 +29,15 @@ function Select({ label, value, options, onChange }: {
   )
 }
 
-export default function EmployeeFilters({ meta, value, onChange }: Props) {
+export default function EmployeeFilters({ meta, value, onChange, hideSearch }: Props) {
   const set = (patch: Partial<Filters>) => onChange({ ...value, ...patch })
   const active = Object.values(value).some(Boolean)
   return (
     <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap" alignItems="center">
-      <TextField size="small" label="Search name, email or title" value={value.search} sx={{ minWidth: 280 }}
-        onChange={(e) => set({ search: e.target.value })} />
+      {!hideSearch && (
+        <TextField size="small" label="Search name, email or title" value={value.search} sx={{ minWidth: 280 }}
+          onChange={(e) => set({ search: e.target.value })} />
+      )}
       <Select label="Country" value={value.country} options={meta?.countries.map((c) => c.code) ?? []}
         onChange={(country) => set({ country })} />
       <Select label="Department" value={value.department} options={meta?.departments ?? []}

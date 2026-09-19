@@ -36,6 +36,7 @@ export const api = {
   updateEmployee: (id: number, data: Partial<EmployeeInput>) =>
     request<Employee>(`/api/employees/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteEmployee: (id: number) => request<void>(`/api/employees/${id}/`, { method: 'DELETE' }),
+  insight: <T>(name: string, params: object) => request<T>(`/api/insights/${name}/${toQueryString(params)}`),
   exportUrl: (q: EmployeeQuery) => `${BASE}/api/employees/export/${toQueryString({ ...q, page: undefined, page_size: undefined })}`,
 }
 
