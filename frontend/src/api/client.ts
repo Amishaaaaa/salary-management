@@ -38,3 +38,11 @@ export const api = {
   deleteEmployee: (id: number) => request<void>(`/api/employees/${id}/`, { method: 'DELETE' }),
   exportUrl: (q: EmployeeQuery) => `${BASE}/api/employees/export/${toQueryString({ ...q, page: undefined, page_size: undefined })}`,
 }
+
+/** DRF returns {field: ["msg", ...]}; flatten to {field: "msg"} for form display. */
+export function fieldErrors(err: unknown): Record<string, string> {
+  if (!(err instanceof ApiError) || typeof err.body !== 'object' || err.body === null) return {}
+  return Object.fromEntries(
+    Object.entries(err.body as Record<string, unknown>).map(([k, v]) => [k, Array.isArray(v) ? v.join(' ') : String(v)]),
+  )
+}

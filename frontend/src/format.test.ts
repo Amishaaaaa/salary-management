@@ -1,5 +1,5 @@
 import { formatMoney, formatUsd, formatUsdCompact } from './format'
-import { toQueryString } from './api/client'
+import { ApiError, fieldErrors, toQueryString } from './api/client'
 
 describe('formatting', () => {
   it('formats whole-unit money in the given currency', () => {
@@ -20,5 +20,17 @@ describe('toQueryString', () => {
 
   it('returns an empty string when there is nothing to send', () => {
     expect(toQueryString({})).toBe('')
+  })
+})
+
+describe('fieldErrors', () => {
+  it('flattens DRF validation errors to one message per field', () => {
+    const err = new ApiError(400, { salary: ['Too high.', 'Really.'], email: ['Taken.'] })
+    expect(fieldErrors(err)).toEqual({ salary: 'Too high. Really.', email: 'Taken.' })
+  })
+
+  it('returns nothing for non-validation errors', () => {
+    expect(fieldErrors(new Error('boom'))).toEqual({})
+    expect(fieldErrors(new ApiError(500, null))).toEqual({})
   })
 })
