@@ -35,7 +35,7 @@ One persona: the HR Manager. They are not technical, work with sensitive data, a
 | Mobile-first design | An HR manager uses this at a desk. |
 
 ## Key decisions
-- **Money is stored as integer minor units plus an ISO currency code**, never floats, so there are no rounding errors.
+- **Money is stored as whole-unit integers (annual base salary) plus a currency code derived from the country**, never floats. A USD-normalised copy is stored at write time so cross-country aggregation stays in the database.
 - **Aggregation happens in the database or in a service layer**, not in the browser. The API returns results, not 10k rows.
 - **Stack:** Django REST Framework + SQLite, React (Vite), pytest for backend tests, Playwright for end-to-end checks. All are free to deploy.
 

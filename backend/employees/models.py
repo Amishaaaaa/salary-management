@@ -30,9 +30,13 @@ class Employee(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    def save(self, *args, **kwargs):
+    def derive_fields(self):
+        """Set currency and USD-normalised salary. Also used by bulk seeding, which bypasses save()."""
         self.currency = constants.COUNTRY_CURRENCY[self.country]
         self.salary_usd = constants.to_usd(self.salary, self.currency)
+
+    def save(self, *args, **kwargs):
+        self.derive_fields()
         super().save(*args, **kwargs)
 
 
