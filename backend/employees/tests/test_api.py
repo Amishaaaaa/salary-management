@@ -2,14 +2,14 @@ import pytest
 from rest_framework.test import APIClient
 
 from employees.models import Employee
-from employees.tests.factories import make_employee
+from employees.tests.factories import authed_client, make_employee
 
 URL = "/api/employees/"
 
 
 @pytest.fixture
 def client():
-    return APIClient()
+    return authed_client()
 
 
 def payload(**overrides):

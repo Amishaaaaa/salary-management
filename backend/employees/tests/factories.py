@@ -18,3 +18,14 @@ def make_employee(**overrides):
     )
     data.update(overrides)
     return Employee.objects.create(**data)
+
+
+def authed_client():
+    """An API client logged in as an HR user (every endpoint requires auth)."""
+    from django.contrib.auth import get_user_model
+    from rest_framework.test import APIClient
+
+    user = get_user_model().objects.create_user(username="hr-test", password="pw")
+    client = APIClient()
+    client.force_authenticate(user)
+    return client

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
     "django_filters",
     "corsheaders",
     "employees",
@@ -133,6 +134,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 CORS_ALLOW_ALL_ORIGINS = True  # read-mostly internal tool; tighten with an env-driven allowlist for real rollout
 
 REST_FRAMEWORK = {
+    # Salary data: everything requires a token unless a view opts out (only login does).
+    'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework.authentication.TokenAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'DEFAULT_THROTTLE_RATES': {'login': '20/min'},  # slows password guessing
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 25,
     'DEFAULT_FILTER_BACKENDS': [

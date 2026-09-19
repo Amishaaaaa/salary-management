@@ -2,7 +2,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from employees import insights
-from employees.tests.factories import make_employee
+from employees.tests.factories import authed_client, make_employee
 
 
 def row(salary, **kw):
@@ -82,7 +82,7 @@ class TestInsightApi:
     def client(self):
         for i, (country, salary) in enumerate([("US", 100_000), ("US", 200_000), ("IN", 2_500_000)]):
             make_employee(email=f"e{i}@x.test", country=country, salary=salary)
-        return APIClient()
+        return authed_client()
 
     def test_summary(self, client):
         data = client.get("/api/insights/summary/").data
