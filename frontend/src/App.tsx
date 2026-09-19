@@ -1,27 +1,21 @@
-import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material'
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import RequireAuth from './auth/RequireAuth'
+import Layout from './components/Layout'
 import EmployeesPage from './pages/EmployeesPage'
 import InsightsPage from './pages/InsightsPage'
-
-const navSx = { color: 'inherit', '&.active': { borderBottom: '2px solid white', borderRadius: 0 } }
+import LoginPage from './pages/LoginPage'
 
 export default function App() {
   return (
-    <Box>
-      <AppBar position="static" elevation={0}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ mr: 4 }}>ACME Salary Manager</Typography>
-          <Button component={NavLink} to="/employees" sx={navSx}>Employees</Button>
-          <Button component={NavLink} to="/insights" sx={navSx}>Insights</Button>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        <Routes>
-          <Route path="/employees" element={<EmployeesPage />} />
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<Layout />}>
           <Route path="/insights" element={<InsightsPage />} />
-          <Route path="*" element={<Navigate to="/employees" replace />} />
-        </Routes>
-      </Container>
-    </Box>
+          <Route path="/employees" element={<EmployeesPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/insights" replace />} />
+    </Routes>
   )
 }

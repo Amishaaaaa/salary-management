@@ -30,3 +30,21 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 - Screenshot review caught the job-title chart silently skipping every other label (Recharts auto-thins ticks), so `interval={0}` was set and a Playwright test now asserts all 12 labels.
 - A stale console error log looked alarming. Rather than assuming, I reproduced in a fresh Playwright browser (zero errors) and turned that check into a permanent smoke test.
 - Playwright e2e covers the full HR flow: server-side validation error, add, raise with reason, history shows both salaries, delete (test cleans up after itself).
+
+## 4. Authentication and UI redesign
+**Prompt:** the first UI was functional but plain. Asked for an eye-catching design plus login/logout.
+
+**Auth decisions (mine):**
+- Token auth (not cookie sessions) because the API and UI will be on different free-tier domains.
+- Every endpoint requires a token; login is rate-limited (20/min) and returns one generic error for unknown user and wrong password, so usernames can't be discovered.
+- Logout revokes the token server-side. Trade-off, stated plainly: DRF issues one token per user, so signing out on one device signs out all of them. Acceptable for a single HR persona on sensitive data.
+- Test hashing uses a fast hasher (`conftest.py`); real PBKDF2 took the suite from 0.4s to 4.9s.
+
+**Design:** custom theme (Inter, indigo/violet/pink), gradient sidebar, hero summary, KPI cards, gradient charts, avatars/department chips/flags in the table, light and dark mode, responsive with a mobile drawer.
+
+**What screenshot review and the tests caught (each fixed, not waved away):**
+- MUI `Grid` inside a `Stack` loses its negative margin: KPI cards were shifted 14px right and clipped on phones. Replaced with CSS grid.
+- Chart x-axes silently dropped labels (Recharts thinning), then, once forced on, overlapped on phones. Long labels are now angled.
+- A failed e2e run left a test employee behind, which broke the next run's headcount assertion. Cleanup now runs in `afterEach` through the API, so it happens even when the test fails.
+- An intermittent e2e failure: `getByLabel('Country')` matched both the filter and a chart's screen-reader label, depending on whether chart data had loaded. Measured (2 failures in 3 runs), diagnosed, fixed with an exact match, then verified stable (4 of 4 clean runs).
+- E2E runs serially: tests share one login, and sign-out revokes the token.

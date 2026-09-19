@@ -1,10 +1,14 @@
 import { expect, test } from '@playwright/test'
+import { deleteEmployeesMatching, signIn } from './helpers'
 
 const unique = `E2E${Date.now()}`
 
+// Even if the test fails midway, never leave test data behind (it would skew headcount and payroll).
+test.afterEach(async ({ request }) => { await deleteEmployeesMatching(request, unique) })
+
 test('HR manager can add, raise, review history and delete an employee', async ({ page }) => {
-  await page.goto('/employees')
-  await expect(page.getByText(/Export CSV \(\d/)).toBeVisible()
+  await signIn(page, '/employees')
+  await expect(page.getByText(/people match your filters/)).toBeVisible()
 
   // Add
   await page.getByRole('button', { name: 'Add employee' }).click()

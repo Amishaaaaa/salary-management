@@ -1,1 +1,6 @@
-body { margin: 0; background: #f5f6fa; }
+html, body, #root { height: 100%; }
+body { margin: 0; -webkit-font-smoothing: antialiased; }
+@keyframes float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+.fade-up { animation: fadeUp .45s ease both; }
+@media (prefers-reduced-motion: reduce) { .fade-up, [data-float] { animation: none !important; } }
