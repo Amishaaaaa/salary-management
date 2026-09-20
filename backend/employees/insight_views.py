@@ -1,3 +1,5 @@
+import math
+
 from django.db.models import Avg, Count, Sum
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
@@ -24,11 +26,17 @@ def _group_param(request, default):
     return group
 
 
-def _number(request, name, default, cast=float):
+def _number(request, name, default, cast=float, *, minimum=None, exclusive_min=False):
+    """Parse a numeric query param. Anything unparseable, non-finite or out of range is a 400, never a silent default."""
     try:
-        return cast(request.query_params.get(name, default))
+        value = cast(request.query_params.get(name, default))
     except ValueError:
         raise ValidationError({name: "Must be a number."})
+    if not math.isfinite(value):
+        raise ValidationError({name: "Must be a finite number."})
+    if minimum is not None and (value <= minimum if exclusive_min else value < minimum):
+        raise ValidationError({name: f"Must be {'greater than' if exclusive_min else 'at least'} {minimum}."})
+    return value
 
 
 @api_view(["GET"])
@@ -60,8 +68,8 @@ def percentiles(request):
 
 @api_view(["GET"])
 def outliers(request):
-    threshold = _number(request, "threshold", 0.4)
-    limit = _number(request, "limit", 50, int)
+    threshold = _number(request, "threshold", 0.4, minimum=0, exclusive_min=True)
+    limit = _number(request, "limit", 50, int, minimum=1)
     rows = list(_filtered(request).order_by().values(*ROW_FIELDS))
     return Response(insights.find_outliers(rows, threshold=threshold, limit=min(limit, 200)))
 

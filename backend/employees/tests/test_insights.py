@@ -108,3 +108,25 @@ class TestInsightApi:
     def test_percentiles_endpoint(self, client):
         data = client.get("/api/insights/percentiles/?group_by=country").data
         assert {d["group"]: d["median"] for d in data} == {"US": 150_000, "IN": 30_000}
+
+
+@pytest.mark.django_db
+class TestOutlierParameterValidation:
+    """Bad input must be a clear 400, never a silently wrong answer (a negative limit used to slice from the end)."""
+
+    @pytest.fixture
+    def client(self):
+        return authed_client()
+
+    @pytest.mark.parametrize("query", [
+        "limit=-1", "limit=0", "limit=abc", "threshold=0", "threshold=-0.5", "threshold=nan", "threshold=inf", "threshold=abc",
+    ])
+    def test_rejects_invalid_values(self, client, query):
+        res = client.get(f"/api/insights/outliers/?{query}")
+        assert res.status_code == 400
+
+    def test_accepts_valid_values(self, client):
+        assert client.get("/api/insights/outliers/?limit=10&threshold=0.25").status_code == 200
+
+    def test_huge_limit_is_capped_not_rejected(self, client):
+        assert client.get("/api/insights/outliers/?limit=99999").status_code == 200
