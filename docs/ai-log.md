@@ -72,6 +72,26 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 
 **Verification:** Playwright drives the real interaction (button, mouse drag with pointer capture, keyboard, reload persistence) and asserts measured widths with polling instead of sleeps, since the width animates.
 
+## 8. Whole-repo self-review (playbook prompt #6, run for real)
+**Prompt:** playbook prompt #6, *"Before committing, review your own diff for bugs, leftovers and claims in the docs that are not backed by a measurement. List anything you are unsure about instead of hiding it."* I approved running it on the whole repository before deployment (Appendix A, prompt 17).
+
+**Method:** read-only checks first (tracked files, the linter I had never run, Django's deployment checker), then **reproduce each suspected bug before fixing it**, fix it in its own commit with tests, and re-run the full stack.
+
+| # | Finding | Evidence | Fix | Commit |
+|---|---|---|---|---|
+| 1 | Playwright output file tracked in git; Vite template README left in `frontend/`; no favicon | `git ls-files`, file contents | untracked + ignored, real README, favicon | `aa9e593` |
+| 2 | Outlier `limit` / `threshold` accepted nonsense | reproduced: `limit=-1` returned 74 rows (negative slice), `threshold=-1` flagged everyone, `threshold=nan` silently returned nothing | validated to a clear 400 (finite, positive) | `bc93625`, 10 tests (6 failed before the fix) |
+| 3 | `seed_employees` deleted all data unconditionally | read the command; would wipe real data if run on a live DB | refuses on a non-empty DB unless `--reset`; `--if-empty` for deploy scripts; verified against the real 10,000-row DB | `604253c`, 5 tests |
+| 4 | Unsafe production defaults: `DEBUG` on by default, insecure fallback secret key, any host, any CORS origin | `check --deploy` (4 warnings) and reading settings | secure by default: debug off, secret key required, host/CORS allowlists, HTTPS + HSTS; `check --deploy` 4 to 2 warnings, the remaining 2 deliberate | `ab877b8`, 4 tests |
+| 5 | 4 lint warnings; **bug:** a brief network error on page load signed the user out | `npm run lint`; reading `AuthContext` | hooks split from components (0 warnings); only a rejected token ends the session | `b76fd1b`, 4 tests |
+| 6 | Docs out of date: requirements said mobile was "left out" though a phone layout shipped; README test counts and config table stale; limitations incomplete | grep against the code | corrected; added limitations (tokens never expire, per-process throttle, admin enabled) | this commit |
+
+**Test-quality check:** for finding 5 I re-introduced the buggy line and confirmed the new test fails (`expected null to be 'abc'`), then restored the fix. A test that cannot fail proves nothing.
+
+**Result:** backend tests 70 to 88, frontend unit tests 20 to 24, e2e 14 (re-run on a restarted server to prove the new settings work end to end), lint clean.
+
+**Deliberately not changed (flagged instead):** token expiry, a shared rate-limit cache, disabling `/admin/`, HSTS subdomains/preload. Each is listed under "Known limitations" in the README with the reason.
+
 ---
 
 # Appendix A: The prompts used
@@ -168,11 +188,18 @@ The AI tool was **Claude Code** (an agentic CLI: it reads files, runs commands a
 
 *Outcome:* this rewrite. It is edited for clarity only, and the playbook below is kept separate and labelled so the record stays accurate.
 
+### 17. Whole-repo review (a playbook prompt, used for real)
+> *(I asked whether to run playbook prompt #6 on the repository, and answered:)* Yes.
+>
+> The prompt itself, from Appendix B: "Before committing, review your own diff for bugs, leftovers and claims in the docs that are not backed by a measurement. List anything you are unsure about instead of hiding it."
+
+*Outcome:* section 8 above: 6 findings, 5 fixed with tests, 4 items deliberately flagged instead. The wording of this prompt was proposed by the AI and adopted by me by approving it.
+
 ---
 
 # Appendix B: Prompt playbook (how I would phrase these next time)
 
-**These are recommended prompts, not the ones used above.** They capture what I learned about getting better results from an agentic AI tool, and they show the habits I would apply on a real project.
+**These are recommended prompts, not (except where noted) the ones used above.** Prompt #6 was used for real, see Appendix A, prompt 17. They capture what I learned about getting better results from an agentic AI tool, and they show the habits I would apply on a real project.
 
 1. **Requirements first, with room to push back**
    > Act as a product manager for an HR Manager persona. Write a one-page requirements document: goal, scope, features, what is deliberately left out and why, and success criteria. Ask me up to three clarifying questions before writing.

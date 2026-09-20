@@ -32,7 +32,7 @@ One persona: the HR Manager. They are not technical, work with sensitive data, a
 | Roles/permissions and SSO | There is one persona. A single login is enough for the demo. A real rollout needs RBAC and audit logging because this is sensitive data, and it is listed as the first follow-up. |
 | Excel import | Would be useful for migration, but the seed covers the demo. It is the next feature to build. |
 | Approval workflows, performance reviews, salary bands | Valuable, but they widen the scope beyond "manage salaries and answer questions". |
-| Mobile-first design | An HR manager uses this at a desk. |
+| Mobile-first design, native app | An HR manager works at a desk, so the UI is designed desktop-first. It is responsive and usable on a phone, but that is a bonus, not a goal. |
 
 ## Key decisions
 - **Money is stored as whole-unit integers (annual base salary) plus a currency code derived from the country**, never floats. A USD-normalised copy is stored at write time so cross-country aggregation stays in the database.

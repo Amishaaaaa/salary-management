@@ -99,7 +99,7 @@ cd backend
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 venv/bin/python manage.py migrate
-venv/bin/python manage.py seed_employees                       # 10,000 employees in ~1s (deterministic)
+venv/bin/python manage.py seed_employees                       # 10,000 employees in ~1s (deterministic); refuses to run on a non-empty DB
 venv/bin/python manage.py create_hr_user --password acme-hr-2026
 venv/bin/python manage.py runserver 8000
 ```
@@ -118,9 +118,11 @@ Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `DJANGO_SECRET_KEY` | backend | Required in production; the dev default is insecure |
-| `DJANGO_DEBUG` | backend | `1` (default) or `0` |
-| `DJANGO_ALLOWED_HOSTS` | backend | Comma-separated hosts |
+| `DJANGO_SECRET_KEY` | backend | **Required** unless `DJANGO_DEBUG=1`; the app refuses to start without it |
+| `DJANGO_DEBUG` | backend | Off unless set to `1`. `manage.py` (local dev tool) defaults it on; production must set `0` explicitly |
+| `DJANGO_ALLOWED_HOSTS` | backend | Comma-separated hosts (default `localhost,127.0.0.1`) |
+| `DJANGO_CORS_ORIGINS` | backend | Comma-separated frontend origins allowed in production (any origin is allowed only in debug) |
+| `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_HSTS_SECONDS` | backend | HTTPS redirect (default on when not debug) and HSTS lifetime (default 3600s) |
 | `HR_USERNAME`, `HR_PASSWORD` | backend | Used by `create_hr_user` when flags are omitted |
 | `VITE_API_URL` | frontend | API origin when UI and API are on different domains (empty in dev) |
 | `VITE_SHOW_DEMO_LOGIN` | frontend | Set to `false` to hide the demo-credentials box on the login page |
@@ -128,10 +130,10 @@ Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login
 ## Tests
 
 ```bash
-# Backend: 70 tests, ~0.5s. In-memory test DB, no network or external services.
+# Backend: 88 tests, ~1s. In-memory test DB, no network or external services.
 cd backend && venv/bin/pytest
 
-# Frontend unit tests: 20 tests
+# Frontend unit tests: 24 tests
 cd frontend && npm test
 
 # End-to-end (Playwright). Needs the backend (seeded) and frontend running as above.
@@ -140,9 +142,10 @@ cd frontend && npx playwright install chromium && npm run e2e     # 14 tests
 
 What the tests cover, and why they are trustworthy:
 - **Statistics** (`insights.py`) are pure functions tested with plain lists: percentile interpolation, outlier detection (including "a cheap-country salary is *not* an outlier"), and a test proving role mix cannot fake a gender gap.
-- **Seed** determinism: same seed gives identical data, different seed gives different data, and the command is idempotent.
+- **Seed**: determinism (same seed, identical data), and safety: it refuses to delete existing data unless `--reset` is given, and `--if-empty` skips quietly.
 - **API**: validation, history rules, filters, pagination caps, CSV export, and that **every data endpoint rejects anonymous requests** (only login is public).
-- **Auth**: token grants access, logout revokes the token, bad credentials get one generic error.
+- **Auth**: token grants access, logout revokes the token, bad credentials get one generic error; on the frontend, a network blip keeps you signed in while a rejected token signs you out.
+- **Configuration**: production refuses to start without a secret key, debug is off by default, and hosts/CORS/HTTPS are locked down (each case runs in a fresh interpreter).
 - **End-to-end**: sign-in/out flow, the full add, raise, history and delete journey (with cleanup that runs even when the test fails), sidebar collapse/drag/keyboard, and zero console errors on each page.
 
 ## API overview
@@ -195,6 +198,10 @@ The commit history is deliberately incremental: docs first, then models, seed, A
 
 - **Not deployed yet.** Everything above runs locally. The intended free-tier setup is the Django API on Render (persistent disk for SQLite, seed run on first boot) and the static frontend on Vercel or Render, with `VITE_API_URL` pointing at the API and `VITE_SHOW_DEMO_LOGIN=false`.
 - **Single role.** One HR login with no role-based access control or audit log. A real rollout with this data would need both.
+- **Tokens do not expire.** They are revoked on logout, but a token that is never used stays valid. A real rollout would add expiry and rotation.
+- **Login rate limit is per process.** It uses Django's in-memory cache, so with several server workers each enforces its own 20/min. A shared cache (Redis) would make it global.
+- **Django admin (`/admin/`) is still enabled.** It is unused by the app; a real rollout would disable or network-restrict it.
+- **HSTS `includeSubDomains` / `preload` are deliberately off.** They are effectively irreversible and unsafe on shared hosting domains, so `check --deploy` reports two warnings for them.
 - **Synthetic data.** The 10,000 employees are generated (`seeding.py`), including a deliberate 3% gender gap and 1% outliers so the insights have something to show.
 - **Static FX rates.** Deliberate (see above); live rates are a follow-up.
 - **No Excel import.** The natural next feature for migrating real data.
