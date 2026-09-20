@@ -125,3 +125,15 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **A latent bug the change exposed, found by reading logs and not guessing:** 12 e2e tests failed at sign-in. The API worked directly but not through the dev proxy. The Vite log showed `ECONNREFUSED ::1:8000`: Node resolves `localhost` to IPv6 first, while Django's dev server listens on IPv4 only. It had nothing to do with the email change, and it would have hit anyone running the README's setup on a similar machine. Fixed by pointing the proxy at `127.0.0.1`. (I first added an env override for it, but the typecheck rejected `process` without a new dependency, so I removed the unnecessary option rather than add one.)
 
 **Verified:** backend 106, frontend unit 24, e2e 14, lint clean; README screenshots retaken; the Render blueprint's `HR_USERNAME` updated.
+
+## 12. Demo video
+**Prompt:** "Record the video automatically."
+
+**Decision:** drive the real product with a Playwright script instead of screen-recording by hand, so the video is honest (no mock-ups, no editing), reproducible (`npm run demo`) and re-recordable whenever the UI changes. Captions replace narration; a visible cursor ring shows every click, because Playwright's recordings hide the mouse. Captions move to a side panel during dialogs so they never cover the form.
+
+**Iterating with a fast dry run first:** a `DEMO_FAST=1` mode plays the whole script at 8x against a local stack. It found two script bugs before the real recording: the toggle buttons' text is lowercase in the DOM (capitalised by CSS), so an exact-case selector failed; and clicking the next dropdown while the previous menu was still fading out swallowed the click, so the script now waits for each menu to close.
+
+**The demo cleans up after itself:** it adds an employee, gives them a raise, then deletes them through the UI. I still checked the live site afterwards (no leftover record, headcount still 10,000). The one browser 400 in the console is the deliberately rejected salary, so the script filters that out and reports anything else.
+
+**Reviewed the result, not just the exit code:** a contact sheet of frames across the recording confirmed every scene rendered as intended (3 min 11 s, 1280x720, 13.6 MB, zero unexpected console errors).
+

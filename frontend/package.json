@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "demo": "node scripts/record-demo.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

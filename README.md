@@ -6,6 +6,12 @@ Django REST Framework + React (Vite) · SQLite · token auth · 100+ automated t
 
 **Live demo: https://acme-salary.onrender.com** (sign in with `hr@acme.com` / `acme-hr-2026`)
 
+### Demo video (3 minutes)
+
+[![Watch the demo](docs/demo/poster.jpg)](docs/demo/acme-pay-demo.mp4)
+
+*Click to watch.* A walkthrough of the live site: sign-in, the four pay insights, filtering, searching 10,000 employees, adding one (with a rejected typo), a raise with its salary history, delete, the adjustable sidebar and dark mode. It was recorded by a script that drives the real UI, so it is reproducible: `cd frontend && npm run demo` (needs ffmpeg).
+
 > Free hosting: the instance sleeps when idle, so the first load can take up to a minute. Data you change in the demo resets when it restarts. Details under [Deployment](#deployment).
 
 ![Pay overview](docs/screenshots/overview.jpg)
@@ -235,6 +241,7 @@ Lists and SQL aggregates stay fast. The two insights computed in Python, and the
 | [`docs/requirements.md`](docs/requirements.md) | One-page requirements: goal, scope, what is left out and why |
 | [`docs/ai-log.md`](docs/ai-log.md) | How AI was used, where it was steered or corrected, and the bugs that verification and the self-review caught |
 | [`docs/performance.md`](docs/performance.md) | Measured timings and scaling decisions |
+| [`docs/demo/acme-pay-demo.mp4`](docs/demo/acme-pay-demo.mp4) | The demo video, and [`frontend/scripts/record-demo.mjs`](frontend/scripts/record-demo.mjs), the script that recorded it |
 
 The commit history is deliberately incremental: docs first, then models, seed, API, insights, UI, auth, redesign.
 
