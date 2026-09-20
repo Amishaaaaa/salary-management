@@ -2,15 +2,7 @@ import { Button, InputAdornment, MenuItem, Stack, TextField } from '@mui/materia
 import SearchIcon from '@mui/icons-material/Search'
 import type { Meta } from '../api/types'
 import { flag } from '../ui'
-
-export interface Filters {
-  search: string
-  country: string
-  department: string
-  level: string
-}
-
-export const EMPTY_FILTERS: Filters = { search: '', country: '', department: '', level: '' }
+import { EMPTY_FILTERS, type Filters } from './filters'
 
 interface Props {
   meta?: Meta

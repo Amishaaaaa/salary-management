@@ -11,7 +11,7 @@ import InsightsIcon from '@mui/icons-material/AutoGraph'
 import ShieldIcon from '@mui/icons-material/VerifiedUser'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
 import AuroraBackground from '../components/AuroraBackground'
 import Logo from '../components/Logo'
 

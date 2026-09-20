@@ -12,8 +12,8 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRightRounded'
 import DarkModeIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeIcon from '@mui/icons-material/LightModeOutlined'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext'
-import { useColorMode } from '../colorMode'
+import { useAuth } from '../auth/useAuth'
+import { useColorMode } from '../useColorMode'
 import {
   DEFAULT_WIDTH, MAX_WIDTH, MIN_WIDTH, RAIL_WIDTH, dragWidth, isCollapsed, loadWidth, nudgeWidth, saveWidth, settleWidth,
 } from '../sidebar'

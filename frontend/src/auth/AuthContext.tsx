@@ -1,16 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, setUnauthorizedHandler, tokenStore, type AuthUser } from '../api/client'
-
-interface AuthState {
-  user: AuthUser | null
-  /** true until we know whether a stored token is still valid (avoids a login-page flash on refresh) */
-  loading: boolean
-  login: (username: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthState | null>(null)
+import { AuthContext } from './useAuth'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -25,7 +16,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(reset)
     if (!tokenStore.get()) return
-    api.me().then(setUser).catch(() => tokenStore.clear()).finally(() => setLoading(false))
+    // A 401 is handled by the API client (it clears the token and resets us). Any other failure, such as a
+    // brief network error, must not silently sign the user out.
+    api.me().then(setUser).catch(() => undefined).finally(() => setLoading(false))
   }, [reset])
 
   const login = useCallback(async (username: string, password: string) => {
@@ -44,8 +37,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
-  return ctx
-}

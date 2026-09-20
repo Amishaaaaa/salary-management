@@ -1,14 +1,5 @@
-import { Box, Paper, Stack, Typography, useTheme } from '@mui/material'
+import { Box, Paper, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
-
-/** Chart ink that follows the light/dark theme instead of hard-coded greys. */
-export function useInk() {
-  const t = useTheme()
-  return {
-    primary: t.palette.text.primary, secondary: t.palette.text.secondary, grid: t.palette.divider, cursor: t.palette.action.hover,
-    tooltip: { background: t.palette.background.paper, color: t.palette.text.primary, border: `1px solid ${t.palette.divider}`, borderRadius: 10, boxShadow: '0 8px 24px -8px rgba(0,0,0,.35)' },
-  }
-}
 
 /** A vertical or horizontal gradient for bar fills. Same hue family, so identity is never colour-alone. */
 export function BarGradient({ id, from, to, horizontal = false }: { id: string; from: string; to: string; horizontal?: boolean }) {

@@ -1,6 +1,6 @@
 import { Box, CircularProgress } from '@mui/material'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { useAuth } from './AuthContext'
+import { useAuth } from './useAuth'
 
 export default function RequireAuth() {
   const { user, loading } = useAuth()

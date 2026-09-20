@@ -1,10 +1,9 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { createAppTheme, type Mode } from './theme'
+import { ColorModeContext } from './useColorMode'
 
 const KEY = 'acme.mode'
-const ColorModeContext = createContext<{ mode: Mode; toggle: () => void }>({ mode: 'light', toggle: () => {} })
-export const useColorMode = () => useContext(ColorModeContext)
 
 function initialMode(): Mode {
   try {
