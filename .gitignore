@@ -8,3 +8,7 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Deployment build output
+backend/frontend_dist/
+backend/staticfiles/

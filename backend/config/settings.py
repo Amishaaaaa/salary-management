@@ -34,6 +34,8 @@ if not SECRET_KEY:
     SECRET_KEY = "dev-insecure-key-change-me"  # local development only
 
 ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):  # set automatically by Render, so no manual host config
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
 
 
 # Application definition
@@ -91,7 +93,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.environ.get("DJANGO_DB_PATH", BASE_DIR / "db.sqlite3"),
     }
 }
 
@@ -138,6 +140,20 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# The built React app (present in the production image). WhiteNoise serves its hashed assets at the site root;
+# `config.views.spa_index` serves index.html for client-side routes.
+FRONTEND_DIST = BASE_DIR / "frontend_dist"
+if FRONTEND_DIST.is_dir():
+    WHITENOISE_ROOT = FRONTEND_DIST
+
+
+def _is_hashed_asset(path, url):
+    """Vite puts a content hash in every filename under /assets/, so those files can be cached forever."""
+    return url.startswith("/assets/")
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = _is_hashed_asset
 # Any origin in development; in production only the frontend origins listed in DJANGO_CORS_ORIGINS.
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = _env_list("DJANGO_CORS_ORIGINS")
@@ -146,6 +162,7 @@ if not DEBUG:
     # Behind a TLS-terminating proxy (Render, Fly, etc.): trust its header, force HTTPS, secure cookies, HSTS.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "1") == "1"
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]  # the platform probes health over plain HTTP inside its network
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "3600"))  # raise once HTTPS is confirmed stable

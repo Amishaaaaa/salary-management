@@ -11,14 +11,20 @@ Class-based views
     1. Add an import:  from other_app.views import Home
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
 Including another URLconf
-    1. Import the include() function: from django.urls import include, path
+    1. Import the include() function: from django.urls import include, path, re_path
+
+from .views import spa_index
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+
+from .views import spa_index
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("employees.urls")),
+    # Everything else belongs to the React router (must stay last).
+    re_path(r"^(?!api/|admin/|static/).*$", spa_index),
 ]

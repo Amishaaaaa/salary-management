@@ -1,0 +1,13 @@
+.git
+.idea
+**/node_modules
+**/venv
+**/__pycache__
+**/*.pyc
+**/*.sqlite3
+frontend/dist
+frontend/test-results
+frontend/playwright-report
+backend/frontend_dist
+backend/staticfiles
+docs/screenshots
