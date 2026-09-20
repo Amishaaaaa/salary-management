@@ -55,3 +55,12 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **Decisions:** one decorative `AuroraBackground` component in two variants: a bold, dark aurora with drifting blobs, faint grid and rising particles behind the (frosted-glass) login card, and a soft theme-aware wash behind the app. Motion is transform-only (GPU-friendly), the layer is `aria-hidden` with `pointer-events: none`, and `prefers-reduced-motion` turns all animation off.
 
 **Verification, not just eyeballing:** measured the blob positions 5 seconds apart to prove it really animates, confirmed zero console errors, and ran the full e2e suite to prove the decorative layer doesn't intercept clicks. Screenshot review caught a flat top-bar strip cutting across the wash (in both modes) and a light-mode wash too faint to notice; both were fixed.
+
+## 6. Richer animated background
+**Prompt:** "Make a little more animation", then, after seeing floating squares/circles: "remove that square and circle, make it more animated, make it look good."
+
+**What changed:** removed all geometric shapes and pulse rings. Replaced them with flowing motion: four swaying aurora curtains, three layered rolling waves along the bottom (seamless loop: the wave path is drawn twice and translated by -50%), four glowing light lines that stream across using an animated stroke dash, plus the rotating beam, twinkling stars, streaks, particles, and mouse parallax.
+
+**A bug I introduced and caught:** my regex to delete the old `.aurora-ring` rule also matched inside the `prefers-reduced-motion` block and fused two rules, which would have left the beam and stars animating for users who asked for reduced motion. I noticed it when grepping for leftovers, rewrote the block, checked brace balance, and re-measured that every layer's `animation-name` resolves to `none` under reduced motion.
+
+**Verification:** each new layer's computed transform / dash offset changes over 3 s, 60 fps in software rendering, zero console errors, full e2e + unit + build green. Screenshot review noticed a thin light line reading as a strikethrough across the headline, so the lines were softened.
