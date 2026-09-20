@@ -50,10 +50,36 @@ def test_history_ends_at_current_salary_and_starts_with_hire():
 
 
 @pytest.mark.django_db
-def test_seed_command_is_idempotent():
-    from django.core.management import call_command
+class TestSeedCommand:
+    def seed(self, **kw):
+        from django.core.management import call_command
 
-    call_command("seed_employees", count=50, seed=1)
-    call_command("seed_employees", count=50, seed=1)
-    assert Employee.objects.count() == 50
-    assert SalaryRecord.objects.filter(employee__isnull=False).count() >= 50
+        call_command("seed_employees", count=kw.pop("count", 50), seed=kw.pop("seed", 1), **kw)
+
+    def test_seeds_an_empty_database(self):
+        self.seed()
+        assert Employee.objects.count() == 50
+        assert SalaryRecord.objects.count() >= 50
+
+    def test_refuses_to_wipe_existing_data_by_default(self):
+        from django.core.management.base import CommandError
+
+        self.seed()
+        Employee.objects.filter(pk=1).update(first_name="Real")  # stands in for real data
+        with pytest.raises(CommandError, match="--reset"):
+            self.seed()
+        assert Employee.objects.get(pk=1).first_name == "Real"  # untouched
+
+    def test_reset_replaces_the_data(self):
+        self.seed(count=50)
+        self.seed(count=20, reset=True)
+        assert Employee.objects.count() == 20
+
+    def test_if_empty_leaves_existing_data_alone(self):
+        self.seed(count=50)
+        self.seed(count=20, if_empty=True)
+        assert Employee.objects.count() == 50
+
+    def test_if_empty_seeds_when_empty(self):
+        self.seed(count=20, if_empty=True)
+        assert Employee.objects.count() == 20
