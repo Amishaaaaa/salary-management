@@ -64,3 +64,10 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **A bug I introduced and caught:** my regex to delete the old `.aurora-ring` rule also matched inside the `prefers-reduced-motion` block and fused two rules, which would have left the beam and stars animating for users who asked for reduced motion. I noticed it when grepping for leftovers, rewrote the block, checked brace balance, and re-measured that every layer's `animation-name` resolves to `none` under reduced motion.
 
 **Verification:** each new layer's computed transform / dash offset changes over 3 s, 60 fps in software rendering, zero console errors, full e2e + unit + build green. Screenshot review noticed a thin light line reading as a strikethrough across the headline, so the lines were softened.
+
+## 7. Adjustable sidebar
+**Prompt:** "Make the nav bar adjustable." Ambiguous, so I covered the reasonable readings: collapsible (button) and resizable (drag), both remembered.
+
+**Design:** sizing rules live in a React-free module (`sidebar.ts`) with unit tests: free-follow while dragging, snap to the 76px icon rail if released under 150px, never settle in an unusably narrow width, keyboard steps of 16px, corrupt/missing saved values fall back to the default. The layout adds a collapse button, a drag handle, and an icon-only rail with tooltips. Accessibility: the handle is a real `role="separator"` (focusable; arrows resize, Home collapses, Enter/double-click resets); the toggle has `aria-expanded`; the mobile drawer is unchanged.
+
+**Verification:** Playwright drives the real interaction (button, mouse drag with pointer capture, keyboard, reload persistence) and asserts measured widths with polling instead of sleeps, since the width animates.
