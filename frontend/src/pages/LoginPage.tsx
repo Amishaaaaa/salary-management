@@ -3,7 +3,7 @@ import {
   Alert, Box, Button, IconButton, InputAdornment, Paper, Stack, TextField, Typography, useMediaQuery, useTheme,
 } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import PublicIcon from '@mui/icons-material/Public'
@@ -17,7 +17,7 @@ import Logo from '../components/Logo'
 
 // Shown so reviewers can sign in. Set VITE_SHOW_DEMO_LOGIN=false for a real deployment.
 const SHOW_DEMO = import.meta.env.VITE_SHOW_DEMO_LOGIN !== 'false'
-const DEMO = { username: 'hr', password: 'acme-hr-2026' }
+const DEMO = { email: 'hr@acme.com', password: 'acme-hr-2026' }
 
 const FEATURES = [
   { icon: <PublicIcon />, title: '10,000 people, 10 countries', text: 'One place instead of scattered spreadsheets.' },
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const wide = useMediaQuery(useTheme().breakpoints.up('md'))
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
   const [error, setError] = useState('')
@@ -44,13 +44,13 @@ export default function LoginPage() {
     setBusy(true)
     setError('')
     try {
-      await login(username.trim(), password)
+      await login(email.trim(), password) // the API treats the email as the login, case-insensitively
       navigate(from, { replace: true })
     } catch (err) {
       setError(err instanceof ApiError && err.status === 429
         ? 'Too many attempts. Please wait a minute and try again.'
         : err instanceof ApiError && err.status === 400
-          ? 'Invalid username or password.'
+          ? 'Invalid email or password.'
           : 'Could not reach the server. Please try again.')
     } finally {
       setBusy(false)
@@ -93,9 +93,10 @@ export default function LoginPage() {
 
           <Stack spacing={2}>
             {error && <Alert severity="error" role="alert">{error}</Alert>}
-            <TextField label="Username" value={username} autoFocus autoComplete="username" required fullWidth
-              onChange={(e) => setUsername(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutlineIcon fontSize="small" /></InputAdornment> }} />
+            <TextField label="Email" type="email" value={email} autoFocus autoComplete="username" required fullWidth
+              inputProps={{ inputMode: 'email', autoCapitalize: 'none', spellCheck: false }}
+              onChange={(e) => setEmail(e.target.value)}
+              InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlinedIcon fontSize="small" /></InputAdornment> }} />
             <TextField label="Password" value={password} type={show ? 'text' : 'password'} autoComplete="current-password" required fullWidth
               onChange={(e) => setPassword(e.target.value)}
               InputProps={{
@@ -108,7 +109,7 @@ export default function LoginPage() {
                   </InputAdornment>
                 ),
               }} />
-            <Button type="submit" variant="contained" size="large" disabled={busy || !username || !password} sx={{ py: 1.4 }}>
+            <Button type="submit" variant="contained" size="large" disabled={busy || !email || !password} sx={{ py: 1.4 }}>
               {busy ? 'Signing in…' : 'Sign in'}
             </Button>
           </Stack>
@@ -118,9 +119,9 @@ export default function LoginPage() {
               <Typography variant="caption" color="text.secondary" fontWeight={600}>DEMO ACCOUNT</Typography>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5 }}>
                 <Typography variant="body2">
-                  <b>{DEMO.username}</b> / <b>{DEMO.password}</b>
+                  <b>{DEMO.email}</b> / <b>{DEMO.password}</b>
                 </Typography>
-                <Button size="small" onClick={() => { setUsername(DEMO.username); setPassword(DEMO.password) }}>Fill in</Button>
+                <Button size="small" onClick={() => { setEmail(DEMO.email); setPassword(DEMO.password) }}>Fill in</Button>
               </Stack>
             </Box>
           )}

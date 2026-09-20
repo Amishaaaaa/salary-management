@@ -4,7 +4,7 @@ A web app that lets an HR manager manage salaries for a 10,000-person, multi-cou
 
 Django REST Framework + React (Vite) · SQLite · token auth · 100+ automated tests
 
-**Live demo: https://acme-salary.onrender.com** (sign in with `hr` / `acme-hr-2026`)
+**Live demo: https://acme-salary.onrender.com** (sign in with `hr@acme.com` / `acme-hr-2026`)
 
 > Free hosting: the instance sleeps when idle, so the first load can take up to a minute. Data you change in the demo resets when it restarts. Details under [Deployment](#deployment).
 
@@ -116,7 +116,7 @@ npm install
 npm run dev          # http://localhost:5173, proxies /api to localhost:8000
 ```
 
-Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login page has a "Fill in" button for the demo account).
+Open http://localhost:5173 and sign in with **`hr@acme.com` / `acme-hr-2026`** (the login page has a "Fill in" button for the demo account).
 
 ### Configuration
 
@@ -129,7 +129,7 @@ Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login
 | `DJANGO_DB_PATH` | backend | SQLite file location (default `backend/db.sqlite3`) |
 | `RENDER_EXTERNAL_HOSTNAME` | backend | Set automatically by Render; added to the allowed hosts |
 | `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_HSTS_SECONDS` | backend | HTTPS redirect (default on when not debug) and HSTS lifetime (default 3600s) |
-| `HR_USERNAME`, `HR_PASSWORD` | backend | Used by `create_hr_user` when flags are omitted |
+| `HR_USERNAME`, `HR_PASSWORD` | backend | The login email (default `hr@acme.com`) and password, used by `create_hr_user` when its flags are omitted |
 | `VITE_API_URL` | frontend | API origin when UI and API are on different domains (empty in dev) |
 | `VITE_SHOW_DEMO_LOGIN` | frontend | Set to `false` to hide the demo-credentials box on the login page |
 
@@ -141,7 +141,7 @@ The app ships as **one Docker image** that serves both the API and the built Rea
 1. Sign in to Render with GitHub.
 2. **New > Blueprint**, choose this repository, click **Apply**.
 3. Wait for the first build (a few minutes). Render creates the service, generates the secret key, and health-checks `/api/health/`.
-4. Open the service URL (this project's is https://acme-salary.onrender.com) and sign in with the demo account (`hr` / `acme-hr-2026`).
+4. Open the service URL (this project's is https://acme-salary.onrender.com) and sign in with the demo account (`hr@acme.com` / `acme-hr-2026`).
 
 On every boot the container runs migrations, seeds the 10,000 employees (only if the database is empty), creates the HR login, and starts gunicorn. With `autoDeploy: true`, each push to `main` redeploys.
 
@@ -186,7 +186,7 @@ All endpoints except login require `Authorization: Token <token>`.
 
 | Method & path | Purpose |
 |---|---|
-| `POST /api/auth/login/` | Returns `{token, user}`. Rate-limited (20/min) |
+| `POST /api/auth/login/` | Body `{username, password}` where `username` is the login **email** (case-insensitive, surrounding spaces ignored). Returns `{token, user}`. Rate-limited (20/min) |
 | `POST /api/auth/logout/` | Revokes the token |
 | `GET /api/auth/me/` | Current user |
 | `GET /api/meta/` | Countries, departments, levels, job titles (for dropdowns) |

@@ -9,10 +9,10 @@ test('visiting a protected page while signed out redirects to login', async ({ p
 
 test('wrong password shows a clear error and stays on login', async ({ page }) => {
   await page.goto('/login')
-  await page.getByLabel('Username').fill(USER)
+  await page.getByLabel('Email').fill(USER)
   await page.getByLabel(/^Password/).fill('not-the-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('alert')).toContainText('Invalid username or password')
+  await expect(page.getByRole('alert')).toContainText('Invalid email or password')
   await expect(page).toHaveURL(/\/login/)
 })
 

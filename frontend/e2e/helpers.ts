@@ -1,11 +1,11 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test'
 
-export const USER = process.env.E2E_USER ?? 'hr'
+export const USER = process.env.E2E_USER ?? 'hr@acme.com'
 export const PASSWORD = process.env.E2E_PASSWORD ?? 'acme-hr-2026'
 
 export async function signIn(page: Page, path = '/insights') {
   await page.goto(path)
-  await page.getByLabel('Username').fill(USER)
+  await page.getByLabel('Email').fill(USER)
   await page.getByLabel(/^Password/).fill(PASSWORD)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()

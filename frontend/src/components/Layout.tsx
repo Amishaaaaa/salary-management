@@ -51,13 +51,13 @@ function SidebarContent({ collapsed, onNavigate, onSignOut }: SidebarProps) {
       </List>
       <Stack direction={collapsed ? 'column' : 'row'} spacing={collapsed ? 1 : 1.5} alignItems="center"
         sx={{ p: 1.5, borderRadius: 3, bgcolor: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)' }}>
-        <Tooltip title={collapsed ? `${user?.name} (@${user?.username})` : ''} placement="right">
+        <Tooltip title={collapsed ? `${user?.name} (${user?.username})` : ''} placement="right">
           <Avatar sx={{ background: GRADIENTS.pink, width: 38, height: 38, fontWeight: 700 }}>{user?.name.charAt(0).toUpperCase()}</Avatar>
         </Tooltip>
         {!collapsed && (
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" fontWeight={600} noWrap>{user?.name}</Typography>
-            <Typography variant="caption" noWrap sx={{ color: 'rgba(255,255,255,.55)' }}>@{user?.username}</Typography>
+            <Typography variant="caption" noWrap sx={{ color: 'rgba(255,255,255,.55)' }}>{user?.username}</Typography>
           </Box>
         )}
         <Tooltip title="Sign out" placement={collapsed ? 'right' : 'top'}>

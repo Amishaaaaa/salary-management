@@ -114,3 +114,14 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 
 **Live verification (after the user deployed via the Render Blueprint):** probed the public URL from outside (health, HTTPS redirect, deep links, locked API, login, 10,000 employees, compressed and cacheable bundle), then ran **all 14 Playwright tests against the live site** (passed). Timing the live API showed ~350 ms per request, and I separated the network floor (a bare health check) from server work instead of quoting raw totals. That exposed a real weakness: the Python-computed insights and the CSV export are slow on the free CPU. I tried the obvious fix (gzip API responses, test-first, 1 new test), measured it, and reported that it cut the export's bytes about 5x but its time only ~10%, so the remaining cost is CPU. I documented the honest numbers and the scaling path (caching, then PostgreSQL) instead of claiming a win.
 
+
+## 11. Email login
+**Prompt:** "Make the username as hr@acme.com like this for login."
+
+**Decision:** keep Django's `username` as the login identifier (it already allows `@`) and make the *experience* an email login, instead of adding a custom user model: an "Email" field (`type=email`, envelope icon), the demo account `hr@acme.com`, and the backend trims and lowercases what is typed, so `HR@Acme.com` and copy-pasted trailing spaces still work. `create_hr_user` normalises the same way and fills the user's email field. The API field stays named `username` (documented in the README) to avoid a breaking contract change for no user benefit.
+
+**Tests first:** 7 tests failed before the change (case/space insensitivity, the default demo email, normalisation, the reworded generic error); 106 pass after.
+
+**A latent bug the change exposed, found by reading logs and not guessing:** 12 e2e tests failed at sign-in. The API worked directly but not through the dev proxy. The Vite log showed `ECONNREFUSED ::1:8000`: Node resolves `localhost` to IPv6 first, while Django's dev server listens on IPv4 only. It had nothing to do with the email change, and it would have hit anyone running the README's setup on a similar machine. Fixed by pointing the proxy at `127.0.0.1`. (I first added an env override for it, but the typecheck rejected `process` without a new dependency, so I removed the unnecessary option rather than add one.)
+
+**Verified:** backend 106, frontend unit 24, e2e 14, lint clean; README screenshots retaken; the Render blueprint's `HR_USERNAME` updated.

@@ -10,7 +10,7 @@ function Probe() {
   return (
     <div>
       <span data-testid="state">{loading ? 'loading' : user ? `in:${user.username}` : 'out'}</span>
-      <button onClick={() => login('hr', 'pw')}>login</button>
+      <button onClick={() => login('hr@acme.com', 'pw')}>login</button>
       <button onClick={() => logout()}>logout</button>
     </div>
   )
@@ -31,9 +31,9 @@ describe('AuthProvider', () => {
 
   it('restores the session from a stored token', async () => {
     tokenStore.set('abc')
-    vi.stubGlobal('fetch', vi.fn(() => json(200, { username: 'hr', name: 'HR Manager' })))
+    vi.stubGlobal('fetch', vi.fn(() => json(200, { username: 'hr@acme.com', name: 'HR Manager' })))
     mount()
-    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('in:hr'))
+    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('in:hr@acme.com'))
   })
 
   it('keeps the stored token when the server is briefly unreachable (a network blip is not a logout)', async () => {
@@ -54,11 +54,11 @@ describe('AuthProvider', () => {
 
   it('logs in, stores the token, and clears it again on logout', async () => {
     const fetchMock = vi.fn((url: string) =>
-      url.includes('/login/') ? json(200, { token: 'tok', user: { username: 'hr', name: 'HR' } }) : Promise.resolve(new Response(null, { status: 204 })))
+      url.includes('/login/') ? json(200, { token: 'tok', user: { username: 'hr@acme.com', name: 'HR' } }) : Promise.resolve(new Response(null, { status: 204 })))
     vi.stubGlobal('fetch', fetchMock)
     mount()
     await act(async () => { screen.getByText('login').click() })
-    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('in:hr'))
+    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('in:hr@acme.com'))
     expect(tokenStore.get()).toBe('tok')
 
     await act(async () => { screen.getByText('logout').click() })

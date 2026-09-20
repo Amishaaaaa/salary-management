@@ -19,10 +19,12 @@ class LoginThrottle(ScopedRateThrottle):
 @permission_classes([AllowAny])
 @throttle_classes([LoginThrottle])
 def login(request):
-    user = authenticate(username=request.data.get("username", ""), password=request.data.get("password", ""))
+    # The login identifier is an email address: case-insensitive, and forgiving of stray spaces from copy/paste.
+    login_id = str(request.data.get("username", "")).strip().lower()
+    user = authenticate(username=login_id, password=request.data.get("password", ""))
     if user is None:
-        # One message for unknown user and wrong password, so it can't be used to discover usernames.
-        return Response({"detail": "Invalid username or password."}, status=status.HTTP_400_BAD_REQUEST)
+        # One message for unknown user and wrong password, so it can't be used to discover which emails have accounts.
+        return Response({"detail": "Invalid email or password."}, status=status.HTTP_400_BAD_REQUEST)
     token, _ = Token.objects.get_or_create(user=user)
     return Response({"token": token.key, "user": _user_payload(user)})
 

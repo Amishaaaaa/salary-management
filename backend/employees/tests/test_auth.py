@@ -42,7 +42,7 @@ def test_token_grants_access(hr):
 @pytest.mark.parametrize("username,password", [("hr", "wrong"), ("nobody", "s3cret-pass"), ("", "")])
 def test_bad_credentials_get_the_same_generic_error(hr, username, password):
     res = login(APIClient(), username, password)
-    assert res.status_code == 400 and res.data["detail"] == "Invalid username or password."
+    assert res.status_code == 400 and res.data["detail"] == "Invalid email or password."
 
 
 def test_logout_revokes_the_token(hr):
@@ -61,3 +61,25 @@ def test_create_hr_user_command_is_idempotent(db):
     assert get_user_model().objects.filter(username="boss").count() == 1
     assert login(APIClient(), "boss", "two").status_code == 200
     assert login(APIClient(), "boss", "one").status_code == 400
+
+
+@pytest.fixture
+def email_user(db):
+    return get_user_model().objects.create_user(username="hr@acme.com", email="hr@acme.com", password="s3cret-pass")
+
+
+@pytest.mark.parametrize("typed", ["hr@acme.com", "HR@Acme.com", "  hr@acme.com  ", "Hr@ACME.COM\t"])
+def test_email_login_ignores_case_and_surrounding_spaces(email_user, typed):
+    res = login(APIClient(), typed)
+    assert res.status_code == 200 and res.data["user"]["username"] == "hr@acme.com"
+
+
+def test_create_hr_user_defaults_to_the_demo_email_and_normalises_it(db):
+    from django.core.management import call_command
+
+    call_command("create_hr_user", password="pw")  # no --username: the default login
+    call_command("create_hr_user", username="  Boss@Acme.COM ", password="pw")
+    users = get_user_model().objects
+    assert users.filter(username="hr@acme.com", email="hr@acme.com").exists()
+    assert users.filter(username="boss@acme.com", email="boss@acme.com").exists()  # stored lowercase, email field filled
+    assert login(APIClient(), "BOSS@acme.com", "pw").status_code == 200

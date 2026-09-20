@@ -12,8 +12,8 @@ services:
         value: "0"
       - key: DJANGO_SECRET_KEY
         generateValue: true     # a random secret, created once by Render and kept out of git
-      - key: HR_USERNAME
-        value: hr
+      - key: HR_USERNAME     # the login email
+        value: hr@acme.com
       # Public on purpose: this is a demo with synthetic data, and the login page shows the same credentials.
       # For real data, remove this value, set HR_PASSWORD in the dashboard, and rebuild with VITE_SHOW_DEMO_LOGIN=false.
       - key: HR_PASSWORD
