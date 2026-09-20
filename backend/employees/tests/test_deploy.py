@@ -53,3 +53,16 @@ def test_hashed_assets_are_cacheable_forever_but_other_files_are_not():
 
     assert _is_hashed_asset("/x/assets/index-Cauxkoud.js", "/assets/index-Cauxkoud.js")
     assert not _is_hashed_asset("/x/favicon.svg", "/favicon.svg")  # not content-hashed, so it must stay revalidated
+
+
+@pytest.mark.django_db
+def test_large_api_responses_are_gzipped_for_browsers_that_accept_it():
+    from employees.tests.factories import authed_client, make_employee
+
+    for i in range(40):
+        make_employee(email=f"user{i}@acme.test")
+    client = authed_client()
+    for path in ("/api/employees/export/", "/api/employees/"):
+        res = client.get(path, headers={"accept-encoding": "gzip"})
+        assert res.status_code == 200 and res["Content-Encoding"] == "gzip", path
+    assert "Content-Encoding" not in client.get("/api/employees/export/")  # clients that do not ask get plain bytes
