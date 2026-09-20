@@ -74,100 +74,120 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 
 ---
 
-# Appendix A: The prompts, verbatim
+# Appendix A: The prompts used
 
-Every instruction I gave the AI in this project, in order, exactly as typed (typos and voice-dictation artefacts left in on purpose, since editing them would defeat the point). Each one is mapped to the commits it produced, so the history can be read alongside it.
+The instructions I gave the AI in this project, in order. They were typed and dictated quickly, so they are **edited here for spelling, grammar and clarity**. Each one keeps its original request and scope; nothing has been added that I did not ask for. Each prompt is mapped to the commits it produced, so the history can be read alongside it.
 
 The AI tool was **Claude Code** (an agentic CLI: it reads files, runs commands and tests, and edits code in my repo). The assessment brief was pasted in full in prompts 1 and 14; it is not reproduced here.
 
 ## How I worked with it
-- **Small, conversational prompts, then review.** I gave direction and constraints; the AI proposed and built; I reviewed the running result and redirected.
-- **Analysis before code** (prompt 1), and **requirements before code**: nothing was built until the scope was written down.
-- **I interrupted and redirected several times** (prompts 3, 6, and the rejected commit after prompt 9). The AI was not left to run unattended.
+- **Short, conversational prompts, then review.** I gave direction and constraints; the AI proposed and built; I reviewed the running result and redirected.
+- **Analysis and requirements before code.** Nothing was built until the scope was written down.
+- **I interrupted and redirected several times** (prompts 3 and 6, and a commit I rejected after prompt 9). The AI was not left to run unattended.
 - **Verification was part of every step**: tests, real-browser checks and screenshots, not just "it compiles". The bugs this caught are listed in sections 3-7 above.
 
 ## Prompts
 
 ### 1. Analysis first
-> *[the full assessment brief, pasted]* ... **analysis this first**
+> *[The full assessment brief, pasted.]* Please analyse this first, before we build anything.
 
-*Outcome:* an analysis of what the assessment rewards (framing, scale awareness, tests, commit history, deployment), a proposed scope and stack, and questions for me. Led to commit `df1cfe0` (requirements doc + this log).
+*Outcome:* an analysis of what the assessment rewards (framing, scale awareness, tests, commit history, deployment), a proposed scope and stack, and questions for me. Led to commit `df1cfe0` (requirements doc and this log).
 
 ### 2. Choosing the stack
-> for backend user Django REST framework and for frontend use React with Vite and for deployment use whatever is free and for testing you can use Pyrite or Playwright.
+> Use Django REST Framework for the backend and React with Vite for the frontend. For deployment, use whatever is free. For testing, you can use pytest or Playwright.
 
-*Outcome:* Django REST Framework + React/Vite, pytest for the backend, Playwright for end-to-end. ("Pyrite" was taken to mean pytest.) Requirements doc written and committed.
+*Outcome:* Django REST Framework, React with Vite, pytest for the backend and Playwright for end-to-end tests. Requirements doc written and committed.
 
-### 3. Repo (I interrupted the AI's plan to build straight away)
-> yes
->
-> *[Request interrupted by user]*
->
-> first crrate the repo
+### 3. Create the repo first *(I interrupted the AI's plan to build straight away)*
+> Yes. *[interrupted]* First, create the repository.
 
-*Outcome:* public GitHub repo `salary-management` created and pushed first, so every later step is visible in the history.
+*Outcome:* a public GitHub repo, `salary-management`, created and pushed first, so every later step is visible in the history.
 
 ### 4. Backend
-> now proceed with the backedn
+> Now proceed with the backend.
 
-*Outcome:* four vertical slices, each with tests and its own commit: `84ecbe6` models, `641f217` seed script, `b09c6ef` employee API, `4465e9b` insights API + performance notes.
+*Outcome:* four vertical slices, each with tests and its own commit: `84ecbe6` models, `641f217` seed script, `b09c6ef` employee API, `4465e9b` insights API and performance notes.
 
 ### 5. Frontend
-> yes
+> Yes. *(In answer to "Shall I start on the frontend?")*
 
-*(In answer to "Want me to start on the frontend?")*
+*Outcome:* three slices: `5a95d9e` app shell and employee table, `c824d9c` add/edit/delete, salary history and Playwright tests, `a020ec8` insights dashboard.
 
-*Outcome:* three slices: `5a95d9e` app shell and employee table, `c824d9c` add/edit/delete + salary history + Playwright, `a020ec8` insights dashboard.
-
-### 6. UI quality and login (I interrupted and restated it more clearly)
-> UI designing is massive. So build a good UI and uh, also add one login logout page.
+### 6. UI quality and login *(I interrupted and restated it more clearly)*
+> The UI design is not good. Build a good UI, and also add a login/logout page. *[interrupted]*
 >
-> *[Request interrupted by user]*
->
-> UI designing is not good. Build a good UI, eye-catching UI design, and also add login logout page for the user to log in.
+> The UI design is not good. Build an eye-catching UI, and add a login/logout page so the user can sign in.
 
-*Outcome:* `d37f552` token authentication (login/logout/me, rate-limited) and `15f7dd4` full redesign: themed layout, gradient sidebar, hero and KPI cards, dark mode, responsive.
+*Outcome:* `d37f552` token authentication (login, logout, current user; rate-limited login) and `15f7dd4` full redesign: themed layout, gradient sidebar, hero and KPI cards, dark mode, responsive.
 
 ### 7. Run it
-> run the project locally
+> Run the project locally.
 
-*Outcome:* servers started and verified (API 401 without a token, login works, UI loads). Asked again later, prompt 11.
+*Outcome:* servers started and verified (API returns 401 without a token, login works, UI loads). Asked again in prompt 11.
 
 ### 8. Background
-> Uh, I don't like the background screen. Can you please make it a little animated and attractive to view?
+> I don't like the background screen. Can you make it a little animated and more attractive to look at?
 
-*Outcome:* `53245cd` animated aurora background for the login page and a soft wash inside the app, with reduced-motion support.
+*Outcome:* `53245cd` animated aurora background on the login page and a soft colour wash inside the app, with reduced-motion support.
 
 ### 9. More animation
-> Can you make a little more animation in the background screen?
+> Can you add a bit more animation to the background screen?
 
 *Outcome:* added a rotating light beam, floating shapes, rings, stars, streaks and mouse parallax. **I rejected the commit for this round after seeing it** (next prompt), so it was never committed in that form.
 
 ### 10. Redirecting after seeing the result
-> remove that square and circle make it more animated look make it look good
+> Remove the squares and circles, make the background more animated, and make it look good.
 
 *Outcome:* shapes and rings removed; replaced with swaying aurora curtains, rolling waves and streaming light lines. Committed as `cb7e4a2`. (The AI introduced and then caught a CSS regression that would have broken reduced-motion; see section 6.)
 
 ### 11. Run it again
-> run the project locally
+> Run the project locally.
 
 ### 12. Adjustable sidebar
-> Can you make the nav bar uh, adjustable?
+> Can you make the navigation bar adjustable?
 
-*Outcome:* `c4c6544` sidebar that collapses to an icon rail, resizes by dragging, and is keyboard-accessible; width remembered.
+*Outcome:* `c4c6544` sidebar that collapses to an icon rail, resizes by dragging, works from the keyboard, and remembers its width.
 
-### 13. README (with a screenshot of the GitHub repo page attached)
-> Add readme file for the git repo.
+### 13. README *(a screenshot of the GitHub repo page was attached)*
+> Add a README file to the Git repository.
 
-*Outcome:* `c739c6d` README with screenshots, architecture diagram, setup and API docs; `f4c6dce` cleanup of IDE files that my screenshot showed were committed by accident; `f4e270c` corrected two inaccuracies the AI found in its own README (a stray "Redis" mention and an out-of-date latency claim).
+*Outcome:* `c739c6d` README with screenshots, architecture diagram, setup and API docs. `f4c6dce` removed IDE files that the screenshot showed had been committed by accident. `f4e270c` corrected two inaccuracies the AI found in its own README (a stray "Redis" mention and an out-of-date latency claim).
 
 ### 14. Completeness check against the brief
-> *[the assessment brief pasted again]* As per the document, do, have, do you have completed all the requirements do you have completed all the requirements? All the requirements. Requirements.
+> *[The assessment brief, pasted again.]* Going by this document, have you completed all the requirements?
 
-*Outcome:* an honest audit: what is done, what is missing (deployment, demo video, sending the link), and what was only partly done (this appendix).
+*Outcome:* an honest audit: what is done, what is missing (deployment, demo video, sending the link), and what was only partly done (the prompts appendix).
 
-### 15. This appendix
-> Partly done
-> * Prompts used with AI tools. docs/ai-log.md summarizes the prompts and what I steered or corrected. It doesn't contain the prompts word for word. I can add the actual prompts as a short appendix if you want them. complete this
+### 15. Prompts appendix
+> Prompts used with AI tools: the AI log summarizes the prompts and what I steered or corrected, but does not include the prompts themselves. Please add them as a short appendix. Complete this.
 
-*Outcome:* this appendix.
+*Outcome:* the first version of this appendix, commit `3e8c8ff`.
+
+### 16. Improve the wording
+> Fix the English in the prompts. For an assessment, give the best version of the prompts we used rather than the exact typed text.
+
+*Outcome:* this rewrite. It is edited for clarity only, and the playbook below is kept separate and labelled so the record stays accurate.
+
+---
+
+# Appendix B: Prompt playbook (how I would phrase these next time)
+
+**These are recommended prompts, not the ones used above.** They capture what I learned about getting better results from an agentic AI tool, and they show the habits I would apply on a real project.
+
+1. **Requirements first, with room to push back**
+   > Act as a product manager for an HR Manager persona. Write a one-page requirements document: goal, scope, features, what is deliberately left out and why, and success criteria. Ask me up to three clarifying questions before writing.
+
+2. **Build in vertical slices**
+   > Build the next feature as one vertical slice: model, service layer, API, then tests. Keep business logic out of views, keep statistics in pure functions I can test without a database, and make one commit per slice.
+
+3. **Tests that are fast and readable**
+   > Write unit tests that are fast, deterministic and easy to read. Use fixed seeds and dates, no network, and one behaviour per test. Include edge cases: empty input, invalid input and permissions.
+
+4. **Verify with evidence, not assertions**
+   > After each change, run the tests and check the result in a real browser. Report measurements (timings, rendered values, console errors), not "it should work". If something looks off, find the cause before fixing it.
+
+5. **Design system, not one-off styling**
+   > Define theme tokens for colour, spacing and type, with light and dark modes. Check screenshots at desktop and phone widths, keep text contrast readable, respect reduced-motion, and make every interactive control keyboard-accessible.
+
+6. **Review your own diff before committing**
+   > Before committing, review your own diff for bugs, leftovers and claims in the docs that are not backed by a measurement. List anything you are unsure about instead of hiding it.
