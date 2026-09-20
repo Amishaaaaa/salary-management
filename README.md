@@ -189,7 +189,7 @@ Measured locally on 10,000 employees, over real HTTP with authentication (best o
 | File | What it shows |
 |---|---|
 | [`docs/requirements.md`](docs/requirements.md) | One-page requirements: goal, scope, what is left out and why |
-| [`docs/ai-log.md`](docs/ai-log.md) | How AI was used, where it was steered or corrected, the bugs verification caught, the prompts used, edited for clarity (Appendix A), and a prompt playbook (Appendix B) |
+| [`docs/ai-log.md`](docs/ai-log.md) | How AI was used, where it was steered or corrected, and the bugs that verification and the self-review caught |
 | [`docs/performance.md`](docs/performance.md) | Measured timings and scaling decisions |
 
 The commit history is deliberately incremental: docs first, then models, seed, API, insights, UI, auth, redesign.
