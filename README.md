@@ -4,6 +4,10 @@ A web app that lets an HR manager manage salaries for a 10,000-person, multi-cou
 
 Django REST Framework + React (Vite) · SQLite · token auth · 100+ automated tests
 
+**Live demo: https://acme-salary.onrender.com** (sign in with `hr` / `acme-hr-2026`)
+
+> Free hosting: the instance sleeps when idle, so the first load can take up to a minute. Data you change in the demo resets when it restarts. Details under [Deployment](#deployment).
+
 ![Pay overview](docs/screenshots/overview.jpg)
 
 <table>
@@ -137,7 +141,7 @@ The app ships as **one Docker image** that serves both the API and the built Rea
 1. Sign in to Render with GitHub.
 2. **New > Blueprint**, choose this repository, click **Apply**.
 3. Wait for the first build (a few minutes). Render creates the service, generates the secret key, and health-checks `/api/health/`.
-4. Open the service URL and sign in with the demo account (`hr` / `acme-hr-2026`).
+4. Open the service URL (this project's is https://acme-salary.onrender.com) and sign in with the demo account (`hr` / `acme-hr-2026`).
 
 On every boot the container runs migrations, seeds the 10,000 employees (only if the database is empty), creates the HR login, and starts gunicorn. With `autoDeploy: true`, each push to `main` redeploys.
 
@@ -158,7 +162,7 @@ docker run --rm -p 8080:8000 -e DJANGO_DEBUG=0 -e DJANGO_SECRET_KEY=any-local-va
 ## Tests
 
 ```bash
-# Backend: 100 tests, ~1s. In-memory test DB, no network or external services.
+# Backend: 101 tests, ~1s. In-memory test DB, no network or external services.
 cd backend && venv/bin/pytest
 
 # Frontend unit tests: 24 tests
@@ -210,7 +214,19 @@ Every insight endpoint accepts the same filters as the employee list.
 
 ## Performance
 
-Measured locally on 10,000 employees, over real HTTP with authentication (best of 3, Django dev server): every endpoint responds in **under 80 ms**. Lists take 6-9 ms, the most expensive insight (gender gap) 38 ms, and a CSV export of all 10,000 rows 79 ms, against a 500 ms target. Details, and what would change at larger scale, are in [`docs/performance.md`](docs/performance.md).
+**Locally** (10,000 employees, real HTTP with auth, best of 3): every endpoint responds in **under 80 ms**. Lists take 6-9 ms, the most expensive insight (gender gap) 38 ms, and a CSV export of all 10,000 rows 79 ms, against a 500 ms target.
+
+**Live on Render's free tier** (measured from the author's location, best of 5). About **350 ms of every request is just the network round trip**; the server work on top of that is:
+
+| Endpoint | Total | Server work beyond the round trip |
+|---|---|---|
+| Employee list (25 rows) | 345 ms | ~0 ms |
+| Payroll by country | 349 ms | ~0 ms |
+| Outliers | 575 ms | ~220 ms |
+| Gender pay gap | 702 ms | ~350 ms |
+| CSV export, all 10,000 rows (220 kB gzipped, was 1.06 MB) | 2.1 s | ~1.8 s |
+
+Lists and SQL aggregates stay fast. The two insights computed in Python, and the export, are noticeably slower on the free tier's throttled CPU (roughly 10x slower than on a laptop). Gzip cut the export's bytes about 5x but not its time, so that time is CPU, not bandwidth. The next steps, in order: cache insight results (they only change when data changes), then move to PostgreSQL (`percentile_cont`) so the database does the statistics. Details and method: [`docs/performance.md`](docs/performance.md).
 
 ## Process artifacts
 

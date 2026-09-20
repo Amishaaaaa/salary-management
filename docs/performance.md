@@ -1,5 +1,27 @@
 # Performance notes
 
+## Live deployment (Render free tier)
+Measured against https://acme-salary.onrender.com from the author's location, best of 5, with gzip enabled as browsers send it. A bare `GET /api/health/` (no database work) takes **353 ms**, so that is the network floor; "beyond baseline" is the server's share.
+
+| Endpoint | Total | Beyond baseline | Bytes on the wire |
+|---|---|---|---|
+| `employees/?page_size=25` | 345 ms | ~0 ms | 1.2 kB |
+| `insights/payroll/?group_by=country` | 349 ms | ~0 ms | 0.3 kB |
+| `insights/outliers/` | 575 ms | ~220 ms | 2.3 kB |
+| `insights/gender-gap/?group_by=department` | 702 ms | ~350 ms | 0.3 kB |
+| `employees/export/` (10,000 rows) | 2133 ms | ~1.8 s | 220 kB (1.06 MB uncompressed) |
+
+**What this shows**
+- SQL-backed endpoints are effectively free next to the network round trip.
+- The endpoints that compute statistics in Python (outliers, gender gap) and the full CSV export take 0.2-1.8 s of server time on the free tier's throttled CPU, about 10x their laptop timings (25-79 ms, tables below).
+- **Gzip helped bytes, not time:** the export shrank about 5x (1.06 MB to 220 kB) but only dropped from 2381 ms to 2133 ms, so the remaining time is CPU. I measured before and after instead of assuming it would help.
+- Against the 500 ms target in the requirements: the interactive endpoints meet it; the two Python insights and the export exceed it on this hosting tier, while meeting it locally.
+
+**What I would do next, in order:** (1) cache insight results per filter set, invalidated on any write, since they only change when data changes; (2) move to PostgreSQL and compute percentiles in SQL with `percentile_cont`; (3) a paid instance with a real CPU share. The dashboard fires the heavy calls in parallel and shows the light ones first, so it stays usable meanwhile.
+
+**Cold start:** the free instance sleeps after ~15 minutes idle. Render states a delay of "50 seconds or more" for the first request, then the container boots (migrate, seed 10,000 employees, start) in about 5 seconds. I did not force a cold start to time it, so I am quoting Render's figure and not my own.
+
+
 ## Update: re-measured after adding authentication
 Over real HTTP with a token (best of 3, Django dev server, 10,000 employees). The first table below was measured earlier, in-process, before auth existed. These are the more representative numbers:
 

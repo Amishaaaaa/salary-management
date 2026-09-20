@@ -112,3 +112,5 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 
 **Honest limits, documented in the README:** the free tier sleeps after ~15 minutes idle and its disk is ephemeral, so live-demo edits reset on restart; the demo credentials are public by design because the data is synthetic.
 
+**Live verification (after the user deployed via the Render Blueprint):** probed the public URL from outside (health, HTTPS redirect, deep links, locked API, login, 10,000 employees, compressed and cacheable bundle), then ran **all 14 Playwright tests against the live site** (passed). Timing the live API showed ~350 ms per request, and I separated the network floor (a bare health check) from server work instead of quoting raw totals. That exposed a real weakness: the Python-computed insights and the CSV export are slow on the free CPU. I tried the obvious fix (gzip API responses, test-first, 1 new test), measured it, and reported that it cut the export's bytes about 5x but its time only ~10%, so the remaining cost is CPU. I documented the honest numbers and the scaling path (caching, then PostgreSQL) instead of claiming a win.
+
