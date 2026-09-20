@@ -71,3 +71,103 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **Design:** sizing rules live in a React-free module (`sidebar.ts`) with unit tests: free-follow while dragging, snap to the 76px icon rail if released under 150px, never settle in an unusably narrow width, keyboard steps of 16px, corrupt/missing saved values fall back to the default. The layout adds a collapse button, a drag handle, and an icon-only rail with tooltips. Accessibility: the handle is a real `role="separator"` (focusable; arrows resize, Home collapses, Enter/double-click resets); the toggle has `aria-expanded`; the mobile drawer is unchanged.
 
 **Verification:** Playwright drives the real interaction (button, mouse drag with pointer capture, keyboard, reload persistence) and asserts measured widths with polling instead of sleeps, since the width animates.
+
+---
+
+# Appendix A: The prompts, verbatim
+
+Every instruction I gave the AI in this project, in order, exactly as typed (typos and voice-dictation artefacts left in on purpose, since editing them would defeat the point). Each one is mapped to the commits it produced, so the history can be read alongside it.
+
+The AI tool was **Claude Code** (an agentic CLI: it reads files, runs commands and tests, and edits code in my repo). The assessment brief was pasted in full in prompts 1 and 14; it is not reproduced here.
+
+## How I worked with it
+- **Small, conversational prompts, then review.** I gave direction and constraints; the AI proposed and built; I reviewed the running result and redirected.
+- **Analysis before code** (prompt 1), and **requirements before code**: nothing was built until the scope was written down.
+- **I interrupted and redirected several times** (prompts 3, 6, and the rejected commit after prompt 9). The AI was not left to run unattended.
+- **Verification was part of every step**: tests, real-browser checks and screenshots, not just "it compiles". The bugs this caught are listed in sections 3-7 above.
+
+## Prompts
+
+### 1. Analysis first
+> *[the full assessment brief, pasted]* ... **analysis this first**
+
+*Outcome:* an analysis of what the assessment rewards (framing, scale awareness, tests, commit history, deployment), a proposed scope and stack, and questions for me. Led to commit `df1cfe0` (requirements doc + this log).
+
+### 2. Choosing the stack
+> for backend user Django REST framework and for frontend use React with Vite and for deployment use whatever is free and for testing you can use Pyrite or Playwright.
+
+*Outcome:* Django REST Framework + React/Vite, pytest for the backend, Playwright for end-to-end. ("Pyrite" was taken to mean pytest.) Requirements doc written and committed.
+
+### 3. Repo (I interrupted the AI's plan to build straight away)
+> yes
+>
+> *[Request interrupted by user]*
+>
+> first crrate the repo
+
+*Outcome:* public GitHub repo `salary-management` created and pushed first, so every later step is visible in the history.
+
+### 4. Backend
+> now proceed with the backedn
+
+*Outcome:* four vertical slices, each with tests and its own commit: `84ecbe6` models, `641f217` seed script, `b09c6ef` employee API, `4465e9b` insights API + performance notes.
+
+### 5. Frontend
+> yes
+
+*(In answer to "Want me to start on the frontend?")*
+
+*Outcome:* three slices: `5a95d9e` app shell and employee table, `c824d9c` add/edit/delete + salary history + Playwright, `a020ec8` insights dashboard.
+
+### 6. UI quality and login (I interrupted and restated it more clearly)
+> UI designing is massive. So build a good UI and uh, also add one login logout page.
+>
+> *[Request interrupted by user]*
+>
+> UI designing is not good. Build a good UI, eye-catching UI design, and also add login logout page for the user to log in.
+
+*Outcome:* `d37f552` token authentication (login/logout/me, rate-limited) and `15f7dd4` full redesign: themed layout, gradient sidebar, hero and KPI cards, dark mode, responsive.
+
+### 7. Run it
+> run the project locally
+
+*Outcome:* servers started and verified (API 401 without a token, login works, UI loads). Asked again later, prompt 11.
+
+### 8. Background
+> Uh, I don't like the background screen. Can you please make it a little animated and attractive to view?
+
+*Outcome:* `53245cd` animated aurora background for the login page and a soft wash inside the app, with reduced-motion support.
+
+### 9. More animation
+> Can you make a little more animation in the background screen?
+
+*Outcome:* added a rotating light beam, floating shapes, rings, stars, streaks and mouse parallax. **I rejected the commit for this round after seeing it** (next prompt), so it was never committed in that form.
+
+### 10. Redirecting after seeing the result
+> remove that square and circle make it more animated look make it look good
+
+*Outcome:* shapes and rings removed; replaced with swaying aurora curtains, rolling waves and streaming light lines. Committed as `cb7e4a2`. (The AI introduced and then caught a CSS regression that would have broken reduced-motion; see section 6.)
+
+### 11. Run it again
+> run the project locally
+
+### 12. Adjustable sidebar
+> Can you make the nav bar uh, adjustable?
+
+*Outcome:* `c4c6544` sidebar that collapses to an icon rail, resizes by dragging, and is keyboard-accessible; width remembered.
+
+### 13. README (with a screenshot of the GitHub repo page attached)
+> Add readme file for the git repo.
+
+*Outcome:* `c739c6d` README with screenshots, architecture diagram, setup and API docs; `f4c6dce` cleanup of IDE files that my screenshot showed were committed by accident; `f4e270c` corrected two inaccuracies the AI found in its own README (a stray "Redis" mention and an out-of-date latency claim).
+
+### 14. Completeness check against the brief
+> *[the assessment brief pasted again]* As per the document, do, have, do you have completed all the requirements do you have completed all the requirements? All the requirements. Requirements.
+
+*Outcome:* an honest audit: what is done, what is missing (deployment, demo video, sending the link), and what was only partly done (this appendix).
+
+### 15. This appendix
+> Partly done
+> * Prompts used with AI tools. docs/ai-log.md summarizes the prompts and what I steered or corrected. It doesn't contain the prompts word for word. I can add the actual prompts as a short appendix if you want them. complete this
+
+*Outcome:* this appendix.
