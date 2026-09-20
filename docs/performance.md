@@ -1,5 +1,24 @@
 # Performance notes
 
+## Update: re-measured after adding authentication
+Over real HTTP with a token (best of 3, Django dev server, 10,000 employees). The first table below was measured earlier, in-process, before auth existed. These are the more representative numbers:
+
+| Endpoint | Time |
+|---|---|
+| `GET /api/employees/?page_size=25` | 6 ms |
+| Filtered + sorted list | 6 ms |
+| Search by name | 9 ms |
+| CSV export (all 10k rows) | 79 ms |
+| `insights/summary` | 7 ms |
+| `insights/payroll` | 6 ms |
+| `insights/percentiles` | 16 ms |
+| `insights/outliers` | 29 ms |
+| `insights/gender-gap` | 38 ms |
+
+Authentication (one indexed token lookup per request) is not measurable next to these costs. The CSV export is the slowest because it serialises 10,000 rows, and it is streamed so memory stays flat.
+
+## Original measurements (in-process, before auth)
+
 Measured locally (SQLite, 10,000 employees, Django test client, single request, warm):
 
 | Endpoint | Time |

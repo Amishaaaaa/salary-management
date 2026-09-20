@@ -128,7 +128,7 @@ Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login
 ## Tests
 
 ```bash
-# Backend: 70 tests, ~0.5s. No network, no real Redis/DB servers.
+# Backend: 70 tests, ~0.5s. In-memory test DB, no network or external services.
 cd backend && venv/bin/pytest
 
 # Frontend unit tests: 20 tests
@@ -160,7 +160,7 @@ All endpoints except login require `Authorization: Token <token>`.
 | `GET /api/employees/{id}/salary-history/` | Salary history, newest first |
 | `GET /api/employees/export/` | CSV of the filtered list (same query params) |
 | `GET /api/insights/summary/` | Headcount, total payroll, mean, median |
-| `GET /api/insights/payroll/?group_by=` | Totals by `country`, `department`, `level` |
+| `GET /api/insights/payroll/?group_by=` | Totals by `country`, `department`, `level` or `job_title` |
 | `GET /api/insights/percentiles/?group_by=` | P25 / median / P75 by group |
 | `GET /api/insights/outliers/?threshold=&limit=` | People far from their peers |
 | `GET /api/insights/gender-gap/?group_by=` | Pay-index gap by group |
@@ -179,7 +179,7 @@ Every insight endpoint accepts the same filters as the employee list.
 
 ## Performance
 
-Measured locally on 10,000 employees: every endpoint responds in **under 60 ms** (list 4-29 ms, CSV export of all rows 53 ms, most expensive insight 39 ms), against a 500 ms target. Details, and what would change at larger scale, are in [`docs/performance.md`](docs/performance.md).
+Measured locally on 10,000 employees, over real HTTP with authentication (best of 3, Django dev server): every endpoint responds in **under 80 ms**. Lists take 6-9 ms, the most expensive insight (gender gap) 38 ms, and a CSV export of all 10,000 rows 79 ms, against a 500 ms target. Details, and what would change at larger scale, are in [`docs/performance.md`](docs/performance.md).
 
 ## Process artifacts
 
