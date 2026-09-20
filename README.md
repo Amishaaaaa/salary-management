@@ -122,15 +122,43 @@ Open http://localhost:5173 and sign in with **`hr` / `acme-hr-2026`** (the login
 | `DJANGO_DEBUG` | backend | Off unless set to `1`. `manage.py` (local dev tool) defaults it on; production must set `0` explicitly |
 | `DJANGO_ALLOWED_HOSTS` | backend | Comma-separated hosts (default `localhost,127.0.0.1`) |
 | `DJANGO_CORS_ORIGINS` | backend | Comma-separated frontend origins allowed in production (any origin is allowed only in debug) |
+| `DJANGO_DB_PATH` | backend | SQLite file location (default `backend/db.sqlite3`) |
+| `RENDER_EXTERNAL_HOSTNAME` | backend | Set automatically by Render; added to the allowed hosts |
 | `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_HSTS_SECONDS` | backend | HTTPS redirect (default on when not debug) and HSTS lifetime (default 3600s) |
 | `HR_USERNAME`, `HR_PASSWORD` | backend | Used by `create_hr_user` when flags are omitted |
 | `VITE_API_URL` | frontend | API origin when UI and API are on different domains (empty in dev) |
 | `VITE_SHOW_DEMO_LOGIN` | frontend | Set to `false` to hide the demo-credentials box on the login page |
 
+## Deployment
+
+The app ships as **one Docker image** that serves both the API and the built React app, so there is one URL and no CORS to configure. `render.yaml` describes it for [Render](https://render.com)'s free tier.
+
+**Deploy (about 5 minutes, no code changes):**
+1. Sign in to Render with GitHub.
+2. **New > Blueprint**, choose this repository, click **Apply**.
+3. Wait for the first build (a few minutes). Render creates the service, generates the secret key, and health-checks `/api/health/`.
+4. Open the service URL and sign in with the demo account (`hr` / `acme-hr-2026`).
+
+On every boot the container runs migrations, seeds the 10,000 employees (only if the database is empty), creates the HR login, and starts gunicorn. With `autoDeploy: true`, each push to `main` redeploys.
+
+**Try the production image locally** (this is what was used to verify it, including the full Playwright suite):
+
+```bash
+docker build -t acme-salary .
+docker run --rm -p 8080:8000 -e DJANGO_DEBUG=0 -e DJANGO_SECRET_KEY=any-local-value \
+  -e HR_PASSWORD=acme-hr-2026 -e RENDER_EXTERNAL_HOSTNAME=localhost -e DJANGO_SECURE_SSL_REDIRECT=0 acme-salary
+# http://localhost:8080
+```
+
+**What the free tier means (worth knowing before you demo it):**
+- The instance **sleeps after ~15 minutes idle**, so the first request afterwards takes about 30-60 seconds to wake it.
+- The disk is **ephemeral**: employees you add or edit in the live demo reset when the instance restarts, and the 10,000 seeded employees are recreated. That is acceptable for a demo on synthetic data; production would use a managed PostgreSQL.
+- The demo credentials are public **on purpose** (synthetic data, and the login page shows them). For real data, remove `HR_PASSWORD` from `render.yaml`, set it privately in the dashboard, and build with `VITE_SHOW_DEMO_LOGIN=false`.
+
 ## Tests
 
 ```bash
-# Backend: 88 tests, ~1s. In-memory test DB, no network or external services.
+# Backend: 100 tests, ~1s. In-memory test DB, no network or external services.
 cd backend && venv/bin/pytest
 
 # Frontend unit tests: 24 tests
@@ -196,7 +224,7 @@ The commit history is deliberately incremental: docs first, then models, seed, A
 
 ## Known limitations and next steps
 
-- **Not deployed yet.** Everything above runs locally. The intended free-tier setup is the Django API on Render (persistent disk for SQLite, seed run on first boot) and the static frontend on Vercel or Render, with `VITE_API_URL` pointing at the API and `VITE_SHOW_DEMO_LOGIN=false`.
+- **Free-tier hosting.** Deployment is configured (see above), but the free tier sleeps when idle and does not persist data, so the live demo resets on restart. SQLite is a deliberate choice for a single-user tool of this size; the README's scaling notes say when to move to PostgreSQL.
 - **Single role.** One HR login with no role-based access control or audit log. A real rollout with this data would need both.
 - **Tokens do not expire.** They are revoked on logout, but a token that is never used stays valid. A real rollout would add expiry and rotation.
 - **Login rate limit is per process.** It uses Django's in-memory cache, so with several server workers each enforces its own 20/min. A shared cache (Redis) would make it global.

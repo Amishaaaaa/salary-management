@@ -98,3 +98,17 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **Decisions:** reuse the same background component for the app instead of a second implementation, with the login screen at full strength and the app toned down so charts and tables stay readable. Two things needed adapting because the login background is dark: particles, streaks and curtains would be invisible on the pale light theme, so they take theme-aware colours (indigo on light, white on dark) and the curtains switch off the `screen` blend on light. Cards became slightly translucent (no backdrop blur, since the colour blobs are already soft, which keeps it cheap) so the motion shows through them and not only in the gaps between them.
 
 **Verification:** measured every layer moving inside the app, 60 fps on the dashboard, particle colour and blend mode per theme, every animation resolving to `none` under reduced motion, then screenshots in both themes to check the data stays legible. README screenshots retaken to match.
+
+## 10. Deployment
+**Prompt:** "Yes, start the deployment."
+
+**Decision (mine, revised from the plan):** the original plan was two hosts (API on Render, frontend on Vercel). I changed it to **one Docker image serving both**: Django serves the built React app through WhiteNoise. That removes CORS, cross-domain token handling and a second deploy to keep in sync, and it is the same artifact everywhere (my laptop, CI, Render).
+
+**What was built:** a multi-stage `Dockerfile` (build the frontend, then a slim Python runtime running as a non-root user), an entrypoint that migrates, seeds only if the database is empty, creates the login and starts gunicorn, a `render.yaml` blueprint with a generated secret key and a health check, a public `/api/health/` endpoint, and a fallback route so deep links like `/insights` survive a browser refresh.
+
+**Verified on the real image, not assumed:** booted it locally and checked plain HTTP redirects to HTTPS (except the health probe), a wrong Host header is rejected, the API needs a login, error pages leak nothing, the process is non-root, deep links work; then ran **all 14 Playwright tests against the container**. Two improvements came from measuring: the JavaScript bundle was served uncompressed (925 kB), so assets are now pre-compressed (281 kB over the wire), and hashed asset files are cached immutably while `index.html` is never cached so a new deploy always appears.
+
+**Tests first for the new code:** 12 new backend tests (health check, routing, host handling, cache rule); 9 failed before the implementation. One test expectation was wrong (Django's admin redirects unknown URLs to its login rather than returning 404), and I corrected the test to assert the property that matters: those paths never fall through to the app.
+
+**Honest limits, documented in the README:** the free tier sleeps after ~15 minutes idle and its disk is ephemeral, so live-demo edits reset on restart; the demo credentials are public by design because the data is synthetic.
+
