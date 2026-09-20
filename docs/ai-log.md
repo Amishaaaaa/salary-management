@@ -91,3 +91,10 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 **Result:** backend tests 70 to 88, frontend unit tests 20 to 24, e2e 14 (re-run on a restarted server to prove the new settings work end to end), lint clean.
 
 **Deliberately not changed (flagged instead):** token expiry, a shared rate-limit cache, disabling `/admin/`, HSTS subdomains/preload. Each is listed under "Known limitations" in the README with the reason.
+
+## 9. Animated background inside the app
+**Prompt:** "Add the animation in the background also after we login."
+
+**Decisions:** reuse the same background component for the app instead of a second implementation, with the login screen at full strength and the app toned down so charts and tables stay readable. Two things needed adapting because the login background is dark: particles, streaks and curtains would be invisible on the pale light theme, so they take theme-aware colours (indigo on light, white on dark) and the curtains switch off the `screen` blend on light. Cards became slightly translucent (no backdrop blur, since the colour blobs are already soft, which keeps it cheap) so the motion shows through them and not only in the gaps between them.
+
+**Verification:** measured every layer moving inside the app, 60 fps on the dashboard, particle colour and blend mode per theme, every animation resolving to `none` under reduced motion, then screenshots in both themes to check the data stays legible. README screenshots retaken to match.

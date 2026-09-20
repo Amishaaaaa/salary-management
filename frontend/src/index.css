@@ -15,7 +15,7 @@ body { margin: 0; -webkit-font-smoothing: antialiased; }
 .aurora-a { animation: drift-a 22s ease-in-out infinite alternate; }
 .aurora-b { animation: drift-b 27s ease-in-out infinite alternate; }
 .aurora-c { animation: drift-c 31s ease-in-out infinite alternate; }
-.aurora-particle { position: absolute; bottom: -12px; border-radius: 50%; background: rgba(255,255,255,.85); animation: rise linear infinite; }
+.aurora-particle { position: absolute; bottom: -12px; border-radius: 50%; background: var(--pc, rgba(255,255,255,.85)); animation: rise linear infinite; }
 .aurora-glow { animation: shimmer 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .aurora-blob, .aurora-particle, .aurora-glow { animation: none !important; }
@@ -29,15 +29,15 @@ body { margin: 0; -webkit-font-smoothing: antialiased; }
 .aurora-parallax { position: absolute; inset: -6%; transition: transform .6s cubic-bezier(.2,.7,.2,1); transform: translate3d(calc(var(--mx, 0) * 26px), calc(var(--my, 0) * 20px), 0); }
 .aurora-beam { position: absolute; left: 50%; top: 50%; width: 140vmax; height: 140vmax; margin: -70vmax 0 0 -70vmax; border-radius: 50%; animation: spin-slow 70s linear infinite;
   background: conic-gradient(from 0deg, transparent 0deg, rgba(139,92,246,.22) 40deg, transparent 90deg, transparent 180deg, rgba(236,72,153,.18) 230deg, transparent 280deg); }
-.aurora-twinkle { position: absolute; border-radius: 50%; background: #fff; animation: twinkle 3.5s ease-in-out infinite; }
-.aurora-streak { position: absolute; height: 2px; width: 140px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.95)); animation: streak 9s ease-in infinite; }
+.aurora-twinkle { position: absolute; border-radius: 50%; background: var(--pc, #fff); animation: twinkle 3.5s ease-in-out infinite; }
+.aurora-streak { position: absolute; height: 2px; width: 140px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--ps, rgba(255,255,255,.95))); animation: streak 9s ease-in infinite; }
 .aurora-b { animation-duration: 17s; } .aurora-a { animation-duration: 15s; } .aurora-c { animation-duration: 20s; }
 
 /* Round 3: flowing motion instead of geometric shapes */
 @keyframes sway { 0% { transform: translateX(-6vw) skewX(-10deg) scaleY(1); opacity: .55 } 50% { transform: translateX(7vw) skewX(9deg) scaleY(1.12); opacity: .95 } 100% { transform: translateX(-3vw) skewX(-6deg) scaleY(.95); opacity: .6 } }
 @keyframes wave-move { from { transform: translate3d(0,0,0) } to { transform: translate3d(-50%,0,0) } }
 @keyframes flow { from { stroke-dashoffset: 1600 } to { stroke-dashoffset: 0 } }
-.aurora-curtain { position: absolute; top: -20vh; height: 130vh; filter: blur(34px); mix-blend-mode: screen; transform-origin: 50% 0; animation: sway 13s ease-in-out infinite alternate;
+.aurora-curtain { position: absolute; top: -20vh; height: 130vh; filter: blur(34px); mix-blend-mode: var(--blend, screen); transform-origin: 50% 0; animation: sway 13s ease-in-out infinite alternate;
   background: linear-gradient(180deg, transparent 0%, var(--c) 35%, var(--c2) 65%, transparent 100%); }
 .aurora-waves { position: absolute; left: 0; right: 0; bottom: 0; height: 34vh; }
 .aurora-wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; animation: wave-move var(--d, 20s) linear infinite; will-change: transform; }

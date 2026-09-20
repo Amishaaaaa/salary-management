@@ -42,7 +42,7 @@ const STREAKS = [
 export default function AuroraBackground({ variant, mode = 'light' }: Props) {
   const login = variant === 'login'
   const dark = login || mode === 'dark'
-  const alpha = login ? 0.78 : dark ? 0.4 : 0.36
+  const alpha = login ? 0.78 : dark ? 0.45 : 0.42
   const root = useRef<HTMLDivElement>(null)
 
   // Parallax: the colour layer follows the cursor a few pixels. rAF-throttled, and skipped for reduced motion.
@@ -74,6 +74,10 @@ export default function AuroraBackground({ variant, mode = 'light' }: Props) {
     <Box ref={root} aria-hidden sx={{
       position: login ? 'absolute' : 'fixed', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
       background: login ? 'linear-gradient(135deg, #0f0c29 0%, #1e1b4b 45%, #24123f 100%)' : dark ? '#0b0f1e' : '#f4f5fb',
+      // Light pages need tinted (not white) sparkles, and curtains that do not rely on the "screen" blend.
+      '--pc': dark ? 'rgba(255,255,255,.85)' : 'rgba(99,102,241,.6)',
+      '--ps': dark ? 'rgba(255,255,255,.95)' : 'rgba(99,102,241,.75)',
+      '--blend': dark ? 'screen' : 'normal',
     }}>
       <div className="aurora-parallax">
         {blobs.map((b, i) => (
@@ -81,43 +85,44 @@ export default function AuroraBackground({ variant, mode = 'light' }: Props) {
             sx={{ width: b.size, height: b.size, top: b.top, left: b.left, background: `radial-gradient(circle at 50% 50%, ${b.color}, transparent 68%)` }} />
         ))}
       </div>
-      {login && (
-        <>
-          {CURTAINS.map((c, i) => (
-            <div key={i} className="aurora-curtain" style={{ left: c.left, width: c.width, animationDuration: `${c.d}s`, animationDelay: `${c.delay}s`, ['--c' as string]: c.c, ['--c2' as string]: c.c2 }} />
+      {/* Motion layers. Full strength on the login screen; toned down inside the app so data stays easy to read. */}
+      <div style={{ position: 'absolute', inset: 0, opacity: login ? 1 : dark ? 0.85 : 0.8 }}>
+        {CURTAINS.slice(0, login ? 4 : 3).map((c, i) => (
+          <div key={i} className="aurora-curtain" style={{ left: c.left, width: c.width, animationDuration: `${c.d}s`, animationDelay: `${c.delay}s`, ['--c' as string]: c.c, ['--c2' as string]: c.c2 }} />
+        ))}
+        <div className="aurora-beam" />
+        <svg className="aurora-flow" viewBox="0 0 1440 900" preserveAspectRatio="none">
+          {FLOWS.map((f, i) => (
+            <path key={i} d={f.d} stroke={f.c} strokeWidth={f.w} opacity={login ? 0.5 : 0.4} style={{ ['--d' as string]: `${f.dur}s`, animationDelay: `${f.delay}s` }} />
           ))}
-          <div className="aurora-beam" />
-          <svg className="aurora-flow" viewBox="0 0 1440 900" preserveAspectRatio="none">
-            {FLOWS.map((f, i) => (
-              <path key={i} d={f.d} stroke={f.c} strokeWidth={f.w} opacity={0.5} style={{ ['--d' as string]: `${f.dur}s`, animationDelay: `${f.delay}s` }} />
-            ))}
-          </svg>
+        </svg>
+        {login && (
           <Box className="aurora-glow" sx={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'radial-gradient(ellipse at 50% 40%, #000 25%, transparent 75%)' }} />
-          {TWINKLES.map((t, i) => (
-            <span key={i} className="aurora-twinkle" style={{ left: `${t.left}%`, top: `${t.top}%`, width: t.size, height: t.size, animationDelay: `${t.delay}s`, animationDuration: `${t.duration}s` }} />
-          ))}
-          <div className="aurora-waves">
-            <svg width="0" height="0" style={{ position: 'absolute' }}>
-              <defs>
-                <linearGradient id="wv1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#6366f1" stopOpacity=".38" /><stop offset="1" stopColor="#6366f1" stopOpacity=".05" /></linearGradient>
-                <linearGradient id="wv2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#a855f7" stopOpacity=".42" /><stop offset="1" stopColor="#a855f7" stopOpacity=".06" /></linearGradient>
-                <linearGradient id="wv3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ec4899" stopOpacity=".5" /><stop offset="1" stopColor="#ec4899" stopOpacity=".08" /></linearGradient>
-              </defs>
+        )}
+        {TWINKLES.slice(0, login ? TWINKLES.length : 22).map((t, i) => (
+          <span key={i} className="aurora-twinkle" style={{ left: `${t.left}%`, top: `${t.top}%`, width: t.size, height: t.size, animationDelay: `${t.delay}s`, animationDuration: `${t.duration}s` }} />
+        ))}
+        <div className="aurora-waves">
+          <svg width="0" height="0" style={{ position: 'absolute' }}>
+            <defs>
+              <linearGradient id="wv1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#6366f1" stopOpacity=".38" /><stop offset="1" stopColor="#6366f1" stopOpacity=".05" /></linearGradient>
+              <linearGradient id="wv2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#a855f7" stopOpacity=".42" /><stop offset="1" stopColor="#a855f7" stopOpacity=".06" /></linearGradient>
+              <linearGradient id="wv3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ec4899" stopOpacity=".5" /><stop offset="1" stopColor="#ec4899" stopOpacity=".08" /></linearGradient>
+            </defs>
+          </svg>
+          {WAVES.map((w, i) => (
+            <svg key={i} className="aurora-wave" viewBox="0 0 2880 200" preserveAspectRatio="none" style={{ ['--d' as string]: `${w.d}s`, height: `${w.top * 100}%`, opacity: 0.95 }}>
+              <path d={WAVE} fill={w.fill} />
             </svg>
-            {WAVES.map((w, i) => (
-              <svg key={i} className="aurora-wave" viewBox="0 0 2880 200" preserveAspectRatio="none" style={{ ['--d' as string]: `${w.d}s`, height: `${w.top * 100}%`, opacity: 0.95 }}>
-                <path d={WAVE} fill={w.fill} />
-              </svg>
-            ))}
-          </div>
-          {STREAKS.map((s, i) => (
-            <span key={i} className="aurora-streak" style={{ top: s.top, left: s.left, animationDelay: `${s.delay}s` }} />
           ))}
-          {PARTICLES.map((p, i) => (
-            <span key={i} className="aurora-particle" style={{ left: `${p.left}%`, width: p.size, height: p.size, animationDuration: `${p.duration}s`, animationDelay: `${p.delay}s` }} />
-          ))}
-        </>
-      )}
+        </div>
+        {STREAKS.map((s, i) => (
+          <span key={i} className="aurora-streak" style={{ top: s.top, left: s.left, animationDelay: `${s.delay}s` }} />
+        ))}
+        {PARTICLES.slice(0, login ? PARTICLES.length : 26).map((p, i) => (
+          <span key={i} className="aurora-particle" style={{ left: `${p.left}%`, width: p.size, height: p.size, animationDuration: `${p.duration}s`, animationDelay: `${p.delay}s` }} />
+        ))}
+      </div>
     </Box>
   )
 }

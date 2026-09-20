@@ -46,7 +46,7 @@ export function createAppTheme(mode: Mode) {
       MuiPaper: {
         styleOverrides: {
           root: { backgroundImage: 'none' },
-          outlined: { borderColor: dark ? 'rgba(148,163,184,0.16)' : 'rgba(15,23,42,0.07)', boxShadow: dark ? 'none' : '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10)' },
+          outlined: { backgroundColor: dark ? 'rgba(19,26,46,.8)' : 'rgba(255,255,255,.84)', borderColor: dark ? 'rgba(148,163,184,0.16)' : 'rgba(15,23,42,0.07)', boxShadow: dark ? 'none' : '0 1px 2px rgba(15,23,42,0.04), 0 8px 24px -12px rgba(15,23,42,0.10)' },
         },
       },
       MuiButton: {
