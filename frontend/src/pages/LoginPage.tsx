@@ -12,8 +12,8 @@ import ShieldIcon from '@mui/icons-material/VerifiedUser'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import AuroraBackground from '../components/AuroraBackground'
 import Logo from '../components/Logo'
-import { GRADIENTS } from '../theme'
 
 // Shown so reviewers can sign in. Set VITE_SHOW_DEMO_LOGIN=false for a real deployment.
 const SHOW_DEMO = import.meta.env.VITE_SHOW_DEMO_LOGIN !== 'false'
@@ -58,11 +58,10 @@ export default function LoginPage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: wide ? '1.1fr 1fr' : '1fr', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', position: 'relative', overflow: 'hidden', isolation: 'isolate', display: 'grid', gridTemplateColumns: wide ? '1.1fr 1fr' : '1fr' }}>
+      <AuroraBackground variant="login" />
       {wide && (
-        <Box sx={{ position: 'relative', overflow: 'hidden', background: GRADIENTS.sidebar, color: '#fff', p: 7, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <Box aria-hidden data-float sx={{ position: 'absolute', width: 420, height: 420, borderRadius: '50%', top: -120, right: -140, background: 'radial-gradient(circle, rgba(236,72,153,.55), transparent 65%)', animation: 'float 9s ease-in-out infinite' }} />
-          <Box aria-hidden data-float sx={{ position: 'absolute', width: 380, height: 380, borderRadius: '50%', bottom: -140, left: -100, background: 'radial-gradient(circle, rgba(99,102,241,.6), transparent 65%)', animation: 'float 11s ease-in-out infinite' }} />
+        <Box sx={{ position: 'relative', zIndex: 1, color: '#fff', p: 7, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <Box sx={{ position: 'relative' }}><Logo /></Box>
           <Box sx={{ position: 'relative' }}>
             <Typography variant="h3" fontWeight={800} sx={{ letterSpacing: '-0.03em', lineHeight: 1.1, mb: 2 }}>
@@ -86,9 +85,9 @@ export default function LoginPage() {
         </Box>
       )}
 
-      <Box sx={{ display: 'grid', placeItems: 'center', p: 3 }}>
-        <Paper variant="outlined" component="form" onSubmit={submit} className="fade-up" sx={{ width: '100%', maxWidth: 420, p: { xs: 3, sm: 4.5 }, borderRadius: 5 }}>
-          {!wide && <Box sx={{ mb: 3, p: 1.5, borderRadius: 3, background: GRADIENTS.sidebar, display: 'inline-block' }}><Logo /></Box>}
+      <Box sx={{ position: 'relative', zIndex: 1, display: 'grid', placeItems: 'center', p: 3 }}>
+        <Paper variant="outlined" component="form" onSubmit={submit} className="fade-up" sx={{ width: '100%', maxWidth: 420, p: { xs: 3, sm: 4.5 }, borderRadius: 5, bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(19,26,46,.82)' : 'rgba(255,255,255,.9)', backdropFilter: 'blur(18px)', border: '1px solid rgba(255,255,255,.25)', boxShadow: '0 30px 80px -20px rgba(0,0,0,.55)' }}>
+          {!wide && <Box sx={{ mb: 3, p: 1.5, borderRadius: 3, bgcolor: '#1e1b4b', display: 'inline-block' }}><Logo /></Box>}
           <Typography variant="h5" sx={{ mb: 0.5 }}>Welcome back</Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>Sign in to manage salaries and view pay insights.</Typography>
 

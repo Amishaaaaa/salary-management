@@ -13,6 +13,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useColorMode } from '../colorMode'
 import { GRADIENTS } from '../theme'
+import AuroraBackground from './AuroraBackground'
 import Logo from './Logo'
 
 const WIDTH = 264
@@ -62,13 +63,14 @@ export default function Layout() {
   )
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative', isolation: 'isolate' }}>
+      <AuroraBackground variant="app" mode={mode} />
       {desktop
         ? <Box component="nav" sx={{ width: WIDTH, flexShrink: 0, position: 'sticky', top: 0, height: '100vh' }}>{sidebar}</Box>
         : <Drawer open={open} onClose={() => setOpen(false)} PaperProps={{ sx: { border: 0 } }}>{sidebar}</Drawer>}
 
-      <Box component="main" sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 5, backdropFilter: 'blur(12px)', bgcolor: mode === 'dark' ? 'rgba(11,15,30,.75)' : 'rgba(244,245,251,.8)' }}>
+      <Box component="main" sx={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ px: { xs: 2, md: 4 }, py: 2, position: 'relative' }}>
           {!desktop && <IconButton aria-label="Open menu" onClick={() => setOpen(true)}><MenuIcon /></IconButton>}
           {desktop ? <Box sx={{ flex: 1 }} /> : <Typography variant="h6" sx={{ flex: 1 }}>{title}</Typography>}
           <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>

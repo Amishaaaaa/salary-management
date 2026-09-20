@@ -4,3 +4,20 @@ body { margin: 0; -webkit-font-smoothing: antialiased; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
 .fade-up { animation: fadeUp .45s ease both; }
 @media (prefers-reduced-motion: reduce) { .fade-up, [data-float] { animation: none !important; } }
+
+/* Animated aurora background: slow drifting colour blobs + rising particles. Transform-only, so it stays on the GPU. */
+@keyframes drift-a { 0% { transform: translate(0,0) scale(1) } 50% { transform: translate(14vw, 10vh) scale(1.25) } 100% { transform: translate(-6vw, 18vh) scale(0.95) } }
+@keyframes drift-b { 0% { transform: translate(0,0) scale(1.1) } 50% { transform: translate(-16vw, -8vh) scale(0.9) } 100% { transform: translate(8vw, -14vh) scale(1.2) } }
+@keyframes drift-c { 0% { transform: translate(0,0) scale(0.9) } 50% { transform: translate(10vw, -16vh) scale(1.2) } 100% { transform: translate(-12vw, 6vh) scale(1) } }
+@keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0 } 15% { opacity: .8 } 100% { transform: translateY(-110vh) scale(.6); opacity: 0 } }
+@keyframes shimmer { 0%, 100% { opacity: .55 } 50% { opacity: .9 } }
+.aurora-blob { position: absolute; border-radius: 50%; filter: blur(70px); will-change: transform; }
+.aurora-a { animation: drift-a 22s ease-in-out infinite alternate; }
+.aurora-b { animation: drift-b 27s ease-in-out infinite alternate; }
+.aurora-c { animation: drift-c 31s ease-in-out infinite alternate; }
+.aurora-particle { position: absolute; bottom: -12px; border-radius: 50%; background: rgba(255,255,255,.85); animation: rise linear infinite; }
+.aurora-glow { animation: shimmer 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob, .aurora-particle, .aurora-glow { animation: none !important; }
+  .aurora-particle { display: none; }
+}

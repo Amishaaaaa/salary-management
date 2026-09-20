@@ -48,3 +48,10 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 - A failed e2e run left a test employee behind, which broke the next run's headcount assertion. Cleanup now runs in `afterEach` through the API, so it happens even when the test fails.
 - An intermittent e2e failure: `getByLabel('Country')` matched both the filter and a chart's screen-reader label, depending on whether chart data had loaded. Measured (2 failures in 3 runs), diagnosed, fixed with an exact match, then verified stable (4 of 4 clean runs).
 - E2E runs serially: tests share one login, and sign-out revokes the token.
+
+## 5. Animated background
+**Prompt:** "I don't like the background screen. Make it a little animated and attractive."
+
+**Decisions:** one decorative `AuroraBackground` component in two variants: a bold, dark aurora with drifting blobs, faint grid and rising particles behind the (frosted-glass) login card, and a soft theme-aware wash behind the app. Motion is transform-only (GPU-friendly), the layer is `aria-hidden` with `pointer-events: none`, and `prefers-reduced-motion` turns all animation off.
+
+**Verification, not just eyeballing:** measured the blob positions 5 seconds apart to prove it really animates, confirmed zero console errors, and ran the full e2e suite to prove the decorative layer doesn't intercept clicks. Screenshot review caught a flat top-bar strip cutting across the wash (in both modes) and a light-mode wash too faint to notice; both were fixed.
