@@ -137,3 +137,14 @@ Tool: Claude Code (agentic CLI). This log records the prompts and the decisions 
 
 **Reviewed the result, not just the exit code:** a contact sheet of frames across the recording confirmed every scene rendered as intended (3 min 11 s, 1280x720, 13.6 MB, zero unexpected console errors).
 
+## 13. Voiceover
+**Prompt:** "Can you add voice also."
+
+**Approach:** a spoken line for every caption, generated locally with the macOS `say` command (nothing leaves the machine; `DEMO_VOICE` picks another voice). Each line is generated first so its length is known; during recording a caption waits for the previous line to finish, so speech never overlaps and the pace adapts to the speech. Each line's start time is logged and the lines are mixed onto the video afterwards and loudness-normalised.
+
+**The first attempt was out of sync, and I only knew because I tested it.** A frame taken one second after each line began showed the *previous* caption, and the lag grew through the video (about 24 s by the end). I did not guess at a fixed offset. I measured: a controlled experiment flashed the screen red at known wall-clock times and located the flashes in the recorded video. They drifted linearly: **Playwright's recorder runs about 11.7% slower than real time** (1.117x; the real run measured 1.119x). A constant offset cannot fix a drift.
+
+**The fix measures the drift on every run instead of assuming it:** the script flashes the screen red once at the start and once at the end, finds both in the raw recording, computes that run's own stretch factor, trims the flashes out, restores true speed, and places each line by the real clock. **Re-tested the same way:** all 21 frames matched their spoken line in order, and the first caption landed 0.03 s from its speech (was about 24 s off by the end). I also checked that no red flash frame survived at either end, that the last line is not cut off, and the loudness (about -17 dB mean, no clipping).
+
+**Trade-off noted:** the video is now about 17 MB, and the earlier silent version is also in git history, so the repository carries both. I chose not to rewrite public history to remove it.
+

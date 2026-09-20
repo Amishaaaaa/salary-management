@@ -6,11 +6,11 @@ Django REST Framework + React (Vite) · SQLite · token auth · 100+ automated t
 
 **Live demo: https://acme-salary.onrender.com** (sign in with `hr@acme.com` / `acme-hr-2026`)
 
-### Demo video (3 minutes)
+### Demo video (3 minutes, with voiceover and captions)
 
 [![Watch the demo](docs/demo/poster.jpg)](docs/demo/acme-pay-demo.mp4)
 
-*Click to watch.* A walkthrough of the live site: sign-in, the four pay insights, filtering, searching 10,000 employees, adding one (with a rejected typo), a raise with its salary history, delete, the adjustable sidebar and dark mode. It was recorded by a script that drives the real UI, so it is reproducible: `cd frontend && npm run demo` (needs ffmpeg).
+*Click to watch.* A walkthrough of the live site: sign-in, the four pay insights, filtering, searching 10,000 employees, adding one (with a rejected typo), a raise with its salary history, delete, the adjustable sidebar and dark mode. It was recorded by a script that drives the real UI, so it is reproducible: `cd frontend && npm run demo` (needs ffmpeg; the voiceover uses the macOS system voice, generated locally, and `DEMO_VOICE=...` picks another).
 
 > Free hosting: the instance sleeps when idle, so the first load can take up to a minute. Data you change in the demo resets when it restarts. Details under [Deployment](#deployment).
 

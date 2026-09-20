@@ -5,9 +5,18 @@
 //   DEMO_FAST=1 npm run demo                       # 8x faster dry run, to check the script
 //
 // Output: docs/demo/acme-pay-demo.mp4 (+ a poster image). Needs ffmpeg for the MP4 conversion.
+//
+// Voiceover: generated locally with macOS `say` (nothing leaves the machine). Every caption has a spoken line; a caption
+// waits until the previous line has finished, so speech never overlaps, and each line's start time is logged and mixed
+// onto the video afterwards. DEMO_VOICE=... picks another voice (e.g. a Premium one), DEMO_VOICEOVER=0 disables it.
+//
+// Sync: Playwright's recorder stretches its timeline (measured ~11% slower than real time, and it varies), so wall-clock
+// timestamps drift away from the picture. The script therefore flashes the screen red once at the start and once at the end,
+// finds both flashes in the recorded video, derives that run's exact stretch factor, trims the flashes out, restores true
+// speed, and places each spoken line by the real clock.
 import { chromium } from '@playwright/test'
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -17,10 +26,80 @@ const PASSWORD = process.env.DEMO_PASSWORD ?? 'acme-hr-2026'
 const OUT = path.resolve(process.env.DEMO_OUT ?? '../docs/demo')
 const FAST = process.env.DEMO_FAST === '1'
 const REPO = 'github.com/Amishaaaaa/salary-management'
+const VOICE = process.env.DEMO_VOICE ?? 'Samantha'
+const RATE = process.env.DEMO_RATE ?? '170' // words per minute: clear, unhurried
+const VOICEOVER = process.env.DEMO_VOICEOVER !== '0' && !FAST && spawnSync('which', ['say']).status === 0
 const PERSON = { first: 'Maya', last: 'Ortega', email: 'maya.ortega@acme.com' }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, FAST ? Math.min(ms, 400) / 4 : ms))
 const type = { delay: FAST ? 4 : 55 }
+
+// What is said for each caption (keyed by the caption text). Written to be listened to, not just to repeat the caption.
+const NARRATION = {
+  'ACME Pay: salary management for HR':
+    'This is ACME Pay, a salary management tool for an HR team. It replaces the Excel sheets used to manage ten thousand employees across ten countries.',
+  'Sign in with a work email':
+    'Sign in with a work email. Sessions use a token, which is revoked on the server when you sign out.',
+  'Overview: how does ACME pay its people?':
+    'The overview answers the question HR actually asks: how does the company pay its people? Headcount, total payroll, and the median and average salary, all at a glance.',
+  'Where does the payroll money go?':
+    'Where does the payroll money go? Switch between country, department and level.',
+  'Typical salary by job title':
+    'For each job title, the bar shows the median salary, and the whisker shows the middle fifty percent of people.',
+  'Is there a gender pay gap?':
+    'Is there a gender pay gap? This compares people with peers in the same country, department and level, so a difference in job mix cannot fake a gap. Hovering shows the exact gap, and how many women and men are in each group.',
+  'Who is paid unusually?':
+    'And who is paid unusually? These are people far from the median of peers with the same title, level and country. You can tighten the threshold.',
+  'Filter every number by country, department or level':
+    'Every number can be filtered by country, department or level. Here is Germany on its own, and everything updates.',
+  '10,000 employees: search, filter, sort and paginate':
+    'The employee list handles all ten thousand people. Searching, filtering, sorting and paging all happen on the server, so it stays fast.',
+  'Sort by salary, or export the filtered list to CSV':
+    'Sort by salary, or export the filtered list to a CSV file.',
+  'Add an employee': 'Now, adding an employee. Every field is validated by the server.',
+  'A typo is caught, not saved':
+    'A typo, like a few extra zeros in the salary, is caught and never saved.',
+  'Fix it and save':
+    'Fix it and save. The salary is stored in local currency, with a US dollar copy so people in different countries can be compared.',
+  'Added': 'The new employee appears with their salary in pounds, and the dollar equivalent.',
+  'Give a raise': 'Now a raise. The old salary is kept, not overwritten.',
+  'Full salary history':
+    'Every employee has a full salary history: the hire salary, and each change after it, with the reason.',
+  'Deleting asks for confirmation': 'Deleting always asks for confirmation first.',
+  'The sidebar is adjustable':
+    'The sidebar is adjustable. Collapse it to icons, or drag its edge to any width. It remembers your choice.',
+  'Light and dark themes': 'There are light and dark themes.',
+  'Signing out revokes the session on the server': 'Signing out revokes the session on the server.',
+  END: 'That is ACME Pay. The live demo, and all the code, tests and design notes, are linked in the repository. Thank you for watching.',
+}
+
+// ---- voiceover: pre-generate each line so its length is known before recording
+const speech = new Map() // key -> { file, seconds }
+const clips = [] // { file, startSeconds } in the order they are spoken
+let recordingStart = 0
+let speechBusyUntil = 0 // seconds since recordingStart
+const nowSeconds = () => (performance.now() - recordingStart) / 1000
+
+function prepareVoice(dir) {
+  if (!VOICEOVER) return
+  for (const [key, text] of Object.entries(NARRATION)) {
+    const file = path.join(dir, `${Object.keys(NARRATION).indexOf(key)}.aiff`)
+    spawnSync('say', ['-v', VOICE, '-r', RATE, '-o', file, text], { stdio: 'inherit' })
+    const probe = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' })
+    speech.set(key, { file, seconds: parseFloat(probe.stdout) })
+  }
+}
+
+/** Start speaking `key` as soon as the previous line is done; resolves at the moment the line starts. */
+async function speak(key) {
+  const line = speech.get(key)
+  if (!line) return
+  const waitFor = speechBusyUntil - nowSeconds()
+  if (waitFor > 0) await new Promise((r) => setTimeout(r, waitFor * 1000))
+  const start = nowSeconds()
+  clips.push({ file: line.file, startSeconds: start })
+  speechBusyUntil = start + line.seconds + 0.45 // a small breath between lines
+}
 
 // ---- overlay: captions, a visible cursor with click feedback, and an end card (injected into every page)
 const overlay = () => {
@@ -67,6 +146,19 @@ const caption = (page, text, sub = '', pos = 'bottom') =>
     el.className = `${p === 'side' ? 'side ' : ''}on`
     el.innerHTML = `${t}${s ? `<small>${s}</small>` : ''}`
   }, [text, sub, pos])
+const flashes = { start: 0, end: 0 } // wall-clock seconds at which each sync flash was shown
+async function syncFlash(page) {
+  const at = nowSeconds()
+  await page.evaluate(() => {
+    const d = document.createElement('div')
+    d.id = 'demo-flash'
+    d.style.cssText = 'position:fixed;inset:0;background:#f00;z-index:2147483647'
+    document.body.appendChild(d)
+  })
+  await new Promise((r) => setTimeout(r, 600))
+  await page.evaluate(() => document.getElementById('demo-flash')?.remove())
+  return at
+}
 const uncaption = (page) => page.evaluate(() => document.getElementById('demo-caption')?.classList.remove('on'))
 
 async function glide(page, locator) {
@@ -87,15 +179,21 @@ async function typeInto(page, locator, text, { clear = false } = {}) {
   await locator.pressSequentially(text, type)
 }
 const scroll = async (page, y) => { await page.evaluate((top) => window.scrollTo({ top, behavior: 'smooth' }), y); await wait(1100) }
-const step = async (page, text, sub, ms, pos) => { await caption(page, text, sub, pos); await wait(ms) }
+const step = async (page, text, sub, ms, pos) => {
+  await speak(text) // no-op when voiceover is off; otherwise waits for the previous line to finish
+  await caption(page, text, sub, pos)
+  await wait(ms)
+}
 
 // ---- the recording
 const tmp = mkdtempSync(path.join(tmpdir(), 'demo-'))
 mkdirSync(OUT, { recursive: true })
+prepareVoice(tmp)
 const browser = await chromium.launch()
 const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: tmp, size: { width: 1280, height: 720 } } })
 await context.addInitScript(overlay)
 const page = await context.newPage()
+recordingStart = performance.now() // the video's clock starts when the page is created
 page.setDefaultTimeout(30_000)
 const problems = []
 page.on('pageerror', (e) => problems.push(e.message))
@@ -106,6 +204,7 @@ try {
   // 1. Sign in
   await page.goto(`${BASE}/login`)
   await page.getByLabel('Email').waitFor()
+  if (VOICEOVER) { flashes.start = await syncFlash(page); await wait(900) } // sync marker, trimmed out later
   await wait(1200)
   await step(page, 'ACME Pay: salary management for HR', '10,000 employees across 10 countries, replacing the Excel sheets', 4800)
   await step(page, 'Sign in with a work email', 'Sessions are token-based and revoked on sign-out', 1200)
@@ -235,19 +334,63 @@ try {
       <p style="opacity:.6;font-size:17px;margin-top:22px">Django REST Framework · React · 100+ automated tests</p></div>`
     end.classList.add('on')
   }, [REPO, BASE.replace(/^https?:\/\//, '')])
-  await wait(6500)
+  await speak('END')
+  await wait(Math.max(6500, (speechBusyUntil - nowSeconds()) * 1000 + 800))
+  if (VOICEOVER) { flashes.end = await syncFlash(page); await wait(500) } // sync marker, trimmed out later
 } finally {
   await page.close().catch(() => {})
   await context.close()
   await browser.close()
 }
 
-// ---- convert to MP4 and grab a poster image
-const webm = (await import('node:fs')).readdirSync(tmp).find((f) => f.endsWith('.webm'))
+// ---- find the sync flashes in the raw recording (runs of fully red frames, as [start, end] seconds of video time)
+function redRuns(file) {
+  const raw = spawnSync('ffmpeg', ['-v', 'error', '-i', file, '-vf', 'fps=25,scale=16:9,format=rgb24', '-f', 'rawvideo', '-'], { maxBuffer: 1 << 29 }).stdout
+  const frame = 16 * 9 * 3
+  const runs = []
+  let begin = null
+  for (let i = 0; i * frame < raw.length; i++) {
+    let r = 0, g = 0
+    for (let p = 0; p < frame; p += 3) { r += raw[i * frame + p]; g += raw[i * frame + p + 1] }
+    const red = (r - g) / 144 > 170
+    if (red && begin === null) begin = i / 25
+    if (!red && begin !== null) { runs.push([begin, i / 25]); begin = null }
+  }
+  return runs
+}
+
+// ---- convert to MP4, mix the voiceover in, and grab a poster image
+const webm = readdirSync(tmp).find((f) => f.endsWith('.webm'))
 const mp4 = path.join(OUT, 'acme-pay-demo.mp4')
+const silent = path.join(tmp, 'silent.mp4')
 const ff = (args) => spawnSync('ffmpeg', ['-y', '-loglevel', 'error', ...args], { stdio: 'inherit' })
-ff(['-i', path.join(tmp, webm), '-c:v', 'libx264', '-crf', '23', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-r', '30', '-movflags', '+faststart', mp4])
+const encode = ['-c:v', 'libx264', '-crf', '23', '-preset', 'slow', '-pix_fmt', 'yuv420p']
+let wallAtVideoStart = 0 // the wall-clock second that the first kept video frame corresponds to
+if (VOICEOVER) {
+  const runs = redRuns(path.join(tmp, webm))
+  if (runs.length < 2) throw new Error(`Expected 2 sync flashes in the video, found ${runs.length}`)
+  const first = runs[0]
+  const last = runs[runs.length - 1]
+  const stretch = (last[0] - first[0]) / (flashes.end - flashes.start) // video seconds per real second
+  const keepFrom = first[1] + 0.15
+  const keepTo = last[0] - 0.1
+  wallAtVideoStart = flashes.start + (keepFrom - first[0]) / stretch
+  console.log(`Sync: video runs ${stretch.toFixed(3)}x real time; keeping ${keepFrom.toFixed(1)}s..${keepTo.toFixed(1)}s of the raw video`)
+  ff(['-i', path.join(tmp, webm), '-vf', `trim=start=${keepFrom}:end=${keepTo},setpts=(PTS-STARTPTS)/${stretch},fps=30`, ...encode, '-movflags', '+faststart', silent])
+} else {
+  ff(['-i', path.join(tmp, webm), ...encode, '-r', '30', '-movflags', '+faststart', mp4])
+}
+if (VOICEOVER) {
+  const inputs = clips.flatMap((c) => ['-i', c.file])
+  const delayed = clips.map((c, i) => {
+    const ms = Math.max(0, Math.round((c.startSeconds - wallAtVideoStart) * 1000))
+    return `[${i + 1}:a]aresample=44100,adelay=${ms}|${ms}[a${i}]`
+  })
+  const mix = `${clips.map((_, i) => `[a${i}]`).join('')}amix=inputs=${clips.length}:normalize=0:duration=longest,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[voice]`
+  ff(['-i', silent, ...inputs, '-filter_complex', [...delayed, mix].join(';'), '-map', '0:v', '-map', '[voice]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', mp4])
+}
 ff(['-ss', FAST ? '3' : '9', '-i', mp4, '-frames:v', '1', '-q:v', '3', path.join(OUT, 'poster.jpg')])
+if (VOICEOVER) console.log(`Voiceover: ${clips.length} lines, voice "${VOICE}" at ${RATE} wpm`)
 rmSync(tmp, { recursive: true, force: true })
 
 const uniqueProblems = [...new Set(problems)]
